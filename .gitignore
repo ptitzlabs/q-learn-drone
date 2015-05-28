@@ -1,3 +1,6 @@
 *.o
+*.out
 .*.sw[op]
 *~
+qt_example
+sandbox
