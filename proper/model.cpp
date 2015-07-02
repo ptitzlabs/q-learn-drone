@@ -1,24 +1,29 @@
 #include "model.h"
 
-model::model(int num_states, float ** state_limits, int num_inputs){
+model::model(int num_states, float ** state_limits, float * init_state, int num_inputs){
    _num_states = num_states;
    _num_inputs = num_inputs;
 
    _cur_state = new float [num_states];
    
    _state_limits = new float* [num_states]; 
-   for(int i = 0; i<num_states; i++) _state_limits[i] = new float[2];
+   for(int i = 0; i<num_states; i++){
+       _state_limits[i] = new float[2];
+       _cur_state[i] = init_state[i];
+   }
 
    for(int i = 0; i<num_states; i++){
-        _state_limits[i][0] = state_limits[i][0];
-        _state_limits[i][1] = state_limits[i][1];
+       _state_limits[i][0] = state_limits[i][0];
+       _state_limits[i][1] = state_limits[i][1];
    }
 }
 
 model::~model(){
+    delete[] _cur_state;
+    _cur_state = NULL;
     for (int i = 0; i< _num_states; i++){
-    delete[] _state_limits[i];
-    _state_limits[i] = NULL;
+        delete[] _state_limits[i];
+        _state_limits[i] = NULL;
     }
     delete[] _state_limits;
     _state_limits = NULL;
@@ -51,4 +56,10 @@ void model::report(){
         printf("%.2f", _cur_state[i]);
         i < _num_states - 1 ? printf(",") : printf("\n");
     }
+}
+
+float * model::get_state(){
+
+    return _cur_state;
+
 }

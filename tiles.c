@@ -22,7 +22,7 @@ It is recommended by the UNH folks that num-tiles be a power of 2, e.g., 16.
 #include "stdlib.h"
 #include "math.h"
 
-int hash_coordinates(int *coordinates, unsigned int num_indices, int memory_size);
+int hash_coordinates(int *coordinates,  int num_indices, int memory_size);
 
 void GetTiles(
 	int tiles[],               // provided array contains returned tiles (tile indices)
@@ -91,11 +91,11 @@ void GetTiles(
 /* hash_coordinates
    Takes an array of integer coordinates and returns the corresponding tile after hashing 
 */
-int hash_coordinates(int *coordinates,unsigned int num_indices, int memory_size)
+int hash_coordinates(int *coordinates, int num_indices, int memory_size)
 {
 	static int first_call = 1;
-	static unsigned int rndseq[2048];
-	unsigned int i,k;
+	static  int rndseq[2048];
+	 int i,k;
 	long index;
 	long sum = 0;
 	

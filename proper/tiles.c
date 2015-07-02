@@ -95,21 +95,21 @@ int hash_coordinates(int *coordinates, int num_indices, int memory_size)
 {
 	static int first_call = 1;
 	static unsigned int rndseq[2048];
-	int i,k;
+	/*int i,k;*/
 	long index;
 	long sum = 0;
 	
 	/* if first call to hashing, initialize table of random numbers */
     if (first_call) {
-		for (k = 0; k < 2048; k++) {
+		for (int k = 0; k < 2048; k++) {
 			rndseq[k] = 0;
-			for (i=0; i < sizeof(int); ++i)
+			for (unsigned int i=0; i < sizeof(int); ++i)
 	    		rndseq[k] = (rndseq[k] << 8) | (rand() & 0xff);    
 		}
         first_call = 0;
     }
 
-	for (i = 0; i < num_indices; i++) {
+	for (int i = 0; i < num_indices; i++) {
 		/* add random table offset for this dimension and wrap around */
 		index = coordinates[i];
 		index += (449 * i);

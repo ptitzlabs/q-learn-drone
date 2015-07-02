@@ -6,7 +6,7 @@
 
 class model{
    public:
-    model(int num_states, float ** state_limits, int num_inputs = 1);
+    model(int num_states, float ** state_limits, float * init_state, int num_inputs = 1);
     ~model();
 
     void model_sim(float* state, float* init_state, float* inputs);
@@ -14,6 +14,7 @@ class model{
     void model_dynamics(float *state, float *init_state, float* inputs);
 
     void report();
+    float * get_state();
    private:
     int _num_states;
     int _num_inputs;
