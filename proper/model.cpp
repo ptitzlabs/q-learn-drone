@@ -30,6 +30,10 @@ model::~model(){
 
 }
 
+void model::model_step(float* inputs ){
+    model_dynamics(_cur_state,_cur_state,inputs);
+}
+
 void model::model_dynamics(float * state, float *init_state, float* inputs){
     state[0] =
         init_state[0] + (inputs[0] - 1.0) * 0.001 + cos(3.0 * init_state[1]) * (-0.0025);
@@ -61,5 +65,10 @@ void model::report(){
 float * model::get_state(){
 
     return _cur_state;
+
+}
+float model::get_state(int n){
+
+    return _cur_state[n];
 
 }

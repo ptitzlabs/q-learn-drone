@@ -91,7 +91,14 @@ void cmac_net::return_value(float output, int hash) {
     for (int i = 0; i < _num_tilings; i++)
         output += _weights[_hashings[hash][i]];
 }
+void cmac_net::quick_update(float delta, int hash){
+    float tmp = _alpha*delta;
+    for (int i = 0; i<_num_tilings;i++){
+        _weights[i]+=tmp*_traces[i];
+    }
 
+
+}
 void cmac_net::update(float* input, float target, int hash) {
     int tiles_array[_num_tilings];
     GetTiles(tiles_array, _num_tilings, input, _num_inputs, _memory_size, hash);
@@ -117,6 +124,7 @@ void cmac_net::report() {
     printf("Number of tilings:  %i\n", _num_tilings);
     printf("Memory size:       %i\n", _memory_size);
     printf("alpha:              %.2f\n", _alpha * _num_tilings);
+
 }
 
 int cmac_net::get_num_hashings(){

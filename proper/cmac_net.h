@@ -18,6 +18,7 @@ class cmac_net {
     void update_traces(int hash);
     void generate_tiles(float* input);
     void return_value(float output, int hash);
+    void quick_update(float delta, int hash);
     void update(float* state, float target, int hash);
     void report();
     int get_num_hashings();

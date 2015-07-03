@@ -11,10 +11,13 @@ class model{
 
     void model_sim(float* state, float* init_state, float* inputs);
 
+    void model_step(float *input);
+
     void model_dynamics(float *state, float *init_state, float* inputs);
 
     void report();
     float * get_state();
+    float get_state(int n);
    private:
     int _num_states;
     int _num_inputs;

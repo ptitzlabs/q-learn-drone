@@ -98,7 +98,7 @@ int main(int argc, const char** argv) {
     delete[] state_limits;
     state_limits = NULL;
 
-    m.report();
+    //m.report();
 
     float* tile_dimension = new float[2];
     tile_dimension[0] = 0.14;
@@ -108,7 +108,7 @@ int main(int argc, const char** argv) {
     delete[] tile_dimension;
     tile_dimension = NULL;
 
-    net.report();
+    //net.report();
 
     //float rand_arr[] = {3,1,2,3,3,1,3};
 
@@ -116,7 +116,18 @@ int main(int argc, const char** argv) {
 
     //printf("Checking max_finder: %i\n",kk);
 
-    q_learn q(&net, &m);
+    float action_levels[] = {0,1,2};
+    float goal[] = {0,0.5};
+    int n_action_levels = 3;
+    int n_goal_states = 1;
+    int goal_state_index[] = {2};
+    q_learn q(&net, &m,n_action_levels,action_levels,goal,n_goal_states,goal_state_index);
+    q.report();
+
+
+    //for(int i = 0; i<100; i++){
+        //q.run_episode();
+    //}
 
     //run_episode(&net, &m);
 

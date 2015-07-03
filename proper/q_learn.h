@@ -10,25 +10,41 @@
 #endif
 
 class q_learn {
-    public:
-        q_learn(cmac_net * net, model * m, float epsilon = 0.0, int max_steps = 10000);
-        ~q_learn();
+   public:
+    q_learn(cmac_net *net, model *m, int n_action_levels, float *action_levels,
+            float *goal, int n_goal_states, int *goal_state_index,
+            float epsilon = 0.0, float gamma = 1.0, int max_steps = 10000);
 
-        void set_goal(float * goal);
-        int find_max();
-        void calc_q();
-        bool with_probability(float p);
-        bool goal_reached();
-        void run_episode();
+    ~q_learn();
 
-    private:
-        int _max_steps;
-        float _epsilon;
-        int _size_q;
-        float *_q;
-        cmac_net *_net;
-        model * _m;
+    void set_goal(float *goal);
+    int find_max();
+    void calc_q();
+    void calc_q(int hash);
+    bool with_probability(float p);
+    bool goal_reached();
+    bool goal_reached(int n);
+    void run_episode();
+    void run_step();
+    void report();
 
+   private:
+
+    cmac_net *_net;
+    model *_m;
+
+    int _max_steps;
+    float _gamma;
+    float _epsilon;
+
+    int _size_q;
+    float *_q;
+
+    int _action;
+    float *_action_levels;
+    int _n_action_levels;
+
+    float *_curr_goal;
+    int _n_goal_states;
+    int *_goal_state_index;
 };
-
-
