@@ -1,5 +1,6 @@
-#define RL_HEADERS_H
+#define UTILS_H
 
+#ifndef RL_HEADERS_H
 #include <cmath>
 #include <cstdio>
 #include <iostream>
@@ -7,7 +8,6 @@
 #include <cstring>
 #include <unistd.h>
 #include <fcntl.h>
-#include "utils.h"
+#endif
 
-#define O_BINARY 0
-//#include "cmac_net.h"
+void print_arr_1d(int n, float * arr);

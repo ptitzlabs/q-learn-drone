@@ -120,9 +120,10 @@ int main(int argc, const char** argv) {
     float goal[] = {0,0.5};
     int n_action_levels = 3;
     int n_goal_states = 1;
-    int goal_state_index[] = {2};
+    int goal_state_index[] = {1};
     q_learn q(&net, &m,n_action_levels,action_levels,goal,n_goal_states,goal_state_index);
     q.report();
+    q.run_episode();
 
 
     //for(int i = 0; i<100; i++){
