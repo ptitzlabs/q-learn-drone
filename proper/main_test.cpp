@@ -3,65 +3,60 @@
 #include "model.h"
 #include "q_learn.h"
 
-//int find_max(int size, float* arr) {
-    //int max_index = 0;
-    //float max_val = arr[0];
-    //int num_ties = 1;
-    //for (int i = 1; i < size; i++) {
-        //if (arr[i] >= max_val) {
-            //if (arr[i] > max_val) {
-                //max_val = arr[i];
-                //max_index = i;
-            //} else {
-                //num_ties++;
-                //if (rand() % num_ties == 0) {
-                    //max_val = arr[i];
-                    //max_index = i;
-                //}
-            //}
-        //}
-    //}
-    //return max_index;
+// int find_max(int size, float* arr) {
+// int max_index = 0;
+// float max_val = arr[0];
+// int num_ties = 1;
+// for (int i = 1; i < size; i++) {
+// if (arr[i] >= max_val) {
+// if (arr[i] > max_val) {
+// max_val = arr[i];
+// max_index = i;
+//} else {
+// num_ties++;
+// if (rand() % num_ties == 0) {
+// max_val = arr[i];
+// max_index = i;
 //}
-//void calc_q(int q_size, float * q, cmac_net * net){
-    //for (int i = 0; i<q_size; i++){
-        //net->return_value(q[i],i);
-    //}
 //}
-
-//bool with_probability(float p){
-    //return p >((float)rand()) / RAND_MAX;
-
+//}
+//}
+// return max_index;
+//}
+// void calc_q(int q_size, float * q, cmac_net * net){
+// for (int i = 0; i<q_size; i++){
+// net->return_value(q[i],i);
+//}
 //}
 
-//bool goal_reached()
+// bool with_probability(float p){
+// return p >((float)rand()) / RAND_MAX;
 
+//}
 
+// bool goal_reached()
 
-//void run_episode(cmac_net* net, model* m) {
-    //net->clear_traces();
-    //net->generate_tiles(m->get_state());
-    //int size_q = net->get_num_hashings();
-    //float* q = new float[size_q];
+// void run_episode(cmac_net* net, model* m) {
+// net->clear_traces();
+// net->generate_tiles(m->get_state());
+// int size_q = net->get_num_hashings();
+// float* q = new float[size_q];
 
-   //for (int i = 0; i< size_q; i++){
-       //net->return_value(q[i],i);
-    //}
+// for (int i = 0; i< size_q; i++){
+// net->return_value(q[i],i);
+//}
 
-   //int action = find_max(size_q,q);
-   //float epsilon = 0.0;
+// int action = find_max(size_q,q);
+// float epsilon = 0.0;
 
-   //if(with_probability(epsilon)){
-       //action = rand() % size_q;
-   //}
+// if(with_probability(epsilon)){
+// action = rand() % size_q;
+//}
 
-   //int step = 0;
+// int step = 0;
 
-   
-   
-
-    //delete[] q;
-    //q = NULL;
+// delete[] q;
+// q = NULL;
 //}
 int main(int argc, const char** argv) {
     // int mem_size = 3000;
@@ -98,7 +93,7 @@ int main(int argc, const char** argv) {
     delete[] state_limits;
     state_limits = NULL;
 
-    //m.report();
+    // m.report();
 
     float* tile_dimension = new float[2];
     tile_dimension[0] = 0.14;
@@ -108,29 +103,33 @@ int main(int argc, const char** argv) {
     delete[] tile_dimension;
     tile_dimension = NULL;
 
-    //net.report();
+    // net.report();
 
-    //float rand_arr[] = {3,1,2,3,3,1,3};
+    // float rand_arr[] = {3,1,2,3,3,1,3};
 
-    //int kk = find_max(7,rand_arr);
+    // int kk = find_max(7,rand_arr);
 
-    //printf("Checking max_finder: %i\n",kk);
+    // printf("Checking max_finder: %i\n",kk);
 
-    float action_levels[] = {0,1,2};
-    float goal[] = {0,0.5};
+    float action_levels[] = {0, 1, 2};
+    float goal[] = {0, 0.5};
     int n_action_levels = 3;
     int n_goal_states = 1;
     int goal_state_index[] = {1};
-    q_learn q(&net, &m,n_action_levels,action_levels,goal,n_goal_states,goal_state_index);
+    q_learn q(&net, &m, n_action_levels, action_levels, goal, n_goal_states,
+              goal_state_index);
     q.report();
-    q.run_episode();
+    // q.run_episode();
 
+    for (int i = 0; i < 10; i++) {
+        printf("Doing run %i\n", i);
+        net.clear_weights();
+        for (int i = 0; i < 100; i++) {
+            q.run_episode();
+        }
+    }
 
-    //for(int i = 0; i<100; i++){
-        //q.run_episode();
-    //}
-
-    //run_episode(&net, &m);
+    // run_episode(&net, &m);
 
     return 0;
 }

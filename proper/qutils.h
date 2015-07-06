@@ -1,4 +1,4 @@
-#define UTILS_H
+#define QUTILS_H
 
 #ifndef RL_HEADERS_H
 #include <cmath>

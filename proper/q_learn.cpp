@@ -14,7 +14,7 @@ q_learn::q_learn(cmac_net* net, model* m, int n_action_levels,
     _goal_state_index = goal_state_index;
     _n_goal_states = n_goal_states;
     _q = new float[_size_q];
-    for (int i = 0; i < _size_q; i++) _q[i] = 0.0;
+    for (int i = 0; i < _size_q; i++) _q[i] = 0.0f;
     _n_action_levels = n_action_levels;
     _action_levels = action_levels;
     calc_q();
@@ -29,17 +29,23 @@ q_learn::~q_learn() {
 }
 
 int q_learn::find_max() {
+    //std::cout<<"Finding max:\n";
     int max_index = 0;
     float max_val = _q[0];
     int num_ties = 1;
     for (int i = 1; i < _size_q; i++) {
+    //std::cout<<"loop i\n";
         if (_q[i] >= max_val) {
+    //std::cout<<"cond 1\n";
             if (_q[i] > max_val) {
+    //std::cout<<"cond 2\n";
                 max_val = _q[i];
                 max_index = i;
             } else {
+    //std::cout<<"cond else\n";
                 num_ties++;
                 if (rand() % num_ties == 0) {
+    //std::cout<<"cond 3\n";
                     max_val = _q[i];
                     max_index = i;
                 }
@@ -50,10 +56,10 @@ int q_learn::find_max() {
 }
 void q_learn::calc_q() {
     for (int i = 0; i < _size_q; i++) {
-        _net->return_value(_q[i], i);
+        _net->return_value(&_q[i], i);
     }
 }
-void q_learn::calc_q(int hash) { _net->return_value(_q[hash], hash); }
+void q_learn::calc_q(int hash) { _net->return_value(&_q[hash], hash); }
 
 bool q_learn::with_probability(float p) {
     return p > ((float)rand()) / RAND_MAX;
@@ -75,6 +81,7 @@ bool q_learn::goal_reached(int n) {
 void q_learn::set_goal(float* goal) { _curr_goal = goal; }
 
 void q_learn::run_episode() {
+    _m->reset();
     _net->clear_traces();
     _net->generate_tiles(_m->get_state());
 
@@ -92,24 +99,29 @@ void q_learn::run_episode() {
         step++;
         run_step();
     }
-    printf("Steps: %i\n", step);
+    printf("%i\n", step);
+    //print_arr_1d(2, _m->get_state());
+    //printf("\n");
 }
 
 void q_learn::run_step() {
     _net->drop_traces();
     _net->update_traces(_action);
     _m->model_step(&_action_levels[_action]);
-    print_arr_1d(2,_m->get_state());
-    std::cout<<std::endl;
+    // print_arr_1d(2,_m->get_state());
+    //std::cout << std::endl;
     float reward = -1;
     float delta = reward - _q[_action];
     _net->generate_tiles(_m->get_state());
     calc_q();
+    //print_arr_1d(3, _q);
+    //std::cout << std::edl;
     _action = find_max();
     if (with_probability(_epsilon)) {
         _action = rand() % _size_q;
     }
     if (!goal_reached()) delta += _q[_action];
+    _net->quick_update(delta);
     calc_q(_action);
 }
 
@@ -123,15 +135,15 @@ void q_learn::report() {
     for (int i = 0; i < _size_q; i++) std::cout << _q[i] << "  ";
 
     std::cout << "\nCurrent action:" << _action
-        << "\nNumber of action values: " << _n_action_levels
-        << "\nAction values:";
+              << "\nNumber of action values: " << _n_action_levels
+              << "\nAction values:";
     for (int i = 0; i < _n_action_levels; i++)
         std::cout << _action_levels[i] << "  ";
     std::cout << "\nNumber of goal states: " << _n_goal_states
-        << "\nGoal state inices: ";
+              << "\nGoal state inices: ";
     for (int i = 0; i < _n_goal_states; i++)
         std::cout << _goal_state_index[i] << "  ";
-    std::cout<<"\nGoal states: ";
+    std::cout << "\nGoal states: ";
     for (int i = 0; i < _n_goal_states; i++)
         std::cout << _curr_goal[_goal_state_index[i]] << "  ";
 

@@ -85,6 +85,7 @@ int episode(int max_steps)
         if (!mcar_goal_p()) delta += gamma * Q[action];
         float temp = (alpha/NUM_TILINGS)*delta;
         for (int i=0; i<N; i++) theta[i] += temp * e[i];           // update theta (learn)
+        //cout<<Q[0]<<" "<<Q[1]<<" "<<Q[2]<<endl;
 		load_Q(action);}
     while (!mcar_goal_p() && step<max_steps);                      // repeat until goal or time limit
     return step;}                                                  // return episode length

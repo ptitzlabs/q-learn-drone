@@ -14,11 +14,12 @@ class cmac_net {
     ~cmac_net();
 
     void clear_traces();
+    void clear_weights();
     void drop_traces();
     void update_traces(int hash);
     void generate_tiles(float* input);
-    void return_value(float output, int hash);
-    void quick_update(float delta, int hash);
+    void return_value(float * output, int hash);
+    void quick_update(float delta);
     void update(float* state, float target, int hash);
     void report();
     int get_num_hashings();

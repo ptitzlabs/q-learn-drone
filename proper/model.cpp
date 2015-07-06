@@ -5,11 +5,13 @@ model::model(int num_states, float ** state_limits, float * init_state, int num_
    _num_inputs = num_inputs;
 
    _cur_state = new float [num_states];
+   _init_state = new float [num_states];
    
    _state_limits = new float* [num_states]; 
    for(int i = 0; i<num_states; i++){
        _state_limits[i] = new float[2];
        _cur_state[i] = init_state[i];
+       _init_state[i] = init_state[i];
    }
 
    for(int i = 0; i<num_states; i++){
@@ -20,7 +22,9 @@ model::model(int num_states, float ** state_limits, float * init_state, int num_
 
 model::~model(){
     delete[] _cur_state;
+    delete[] _init_state;
     _cur_state = NULL;
+    _init_state = NULL;
     for (int i = 0; i< _num_states; i++){
         delete[] _state_limits[i];
         _state_limits[i] = NULL;
@@ -70,5 +74,20 @@ float * model::get_state(){
 float model::get_state(int n){
 
     return _cur_state[n];
+
+}
+
+void model::set_state(float * state){
+    _cur_state = state;
+
+}
+void model::set_state(int n, float state){
+    _cur_state[n] = state;
+}
+
+void model::reset(){
+    _cur_state[0] = 0;
+    _cur_state[1] = -0.5;
+    //*_cur_state = *_init_state;
 
 }

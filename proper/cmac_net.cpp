@@ -19,7 +19,7 @@ cmac_net::cmac_net(int num_inputs, float* tile_dimension, int tile_resolution,
 
     _hashings = new int* [_num_hashings];
 
-    for (int i = 0; i < num_inputs; i++) {
+    for (int i = 0; i < _memory_size; i++) {
         _weights[i] = 0.0f;
 
     }
@@ -64,6 +64,10 @@ void cmac_net::clear_traces(){
 
     for (int i = 0; i < _memory_size; i++) _traces[i] *= 0;
 }
+void cmac_net::clear_weights(){
+
+    for (int i = 0; i < _memory_size; i++) _weights[i] *= 0;
+}
 void cmac_net::drop_traces() {
     for (int i = 0; i < _memory_size; i++) _traces[i] *= _gamma * _lambda;
 
@@ -83,19 +87,21 @@ void cmac_net::generate_tiles(float* input) {
                  i);
 }
 
-void cmac_net::return_value(float output, int hash) {
+void cmac_net::return_value(float * output, int hash) {
     // int tiles_array[_num_tilings];
     // GetTiles(tiles_array, _num_tilings, input, _num_inputs, _memory_size,
     // hash);
-    output = 0;
+    *output = 0;
     for (int i = 0; i < _num_tilings; i++)
-        output += _weights[_hashings[hash][i]];
+        *output += _weights[_hashings[hash][i]];
 }
-void cmac_net::quick_update(float delta, int hash){
+void cmac_net::quick_update(float delta){
     float tmp = _alpha*delta;
-    for (int i = 0; i<_num_tilings;i++){
+    for (int i = 0; i<_memory_size;i++){
         _weights[i]+=tmp*_traces[i];
+        //if (_traces[i] > 0.1) std::cout<<"i:"<<i<<" _trace:"<<_traces[i]<<" new weight:"<<_weights[i]<<std::endl;
     }
+    //std::cout<<"tmp:"<<tmp<<" _alpha:"<<_alpha<<" delta:"<<delta<<std::endl;
 
 
 }
