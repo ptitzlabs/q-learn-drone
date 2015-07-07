@@ -47,4 +47,7 @@ class q_learn {
     float *_curr_goal;
     int _n_goal_states;
     int *_goal_state_index;
+
+    //std::ofstream _myfile;
+
 };

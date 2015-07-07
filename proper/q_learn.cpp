@@ -19,6 +19,8 @@ q_learn::q_learn(cmac_net* net, model* m, int n_action_levels,
     _action_levels = action_levels;
     calc_q();
     _action = find_max();
+  //_myfile.open ("example.txt");
+  //_myfile << "Writing this to a file.\n";
 }
 
 q_learn::~q_learn() {
@@ -115,12 +117,13 @@ void q_learn::run_step() {
     _net->generate_tiles(_m->get_state());
     calc_q();
     //print_arr_1d(3, _q);
-    //std::cout << std::edl;
+
+    //std::cout <<"gamma:"<< std::endl;
     _action = find_max();
     if (with_probability(_epsilon)) {
         _action = rand() % _size_q;
     }
-    if (!goal_reached()) delta += _q[_action];
+    if (!goal_reached()) delta += _gamma*_q[_action];
     _net->quick_update(delta);
     calc_q(_action);
 }

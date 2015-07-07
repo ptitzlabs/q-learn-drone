@@ -62,11 +62,11 @@ cmac_net::~cmac_net() {
 }
 void cmac_net::clear_traces(){
 
-    for (int i = 0; i < _memory_size; i++) _traces[i] *= 0;
+    for (int i = 0; i < _memory_size; i++) _traces[i] = 0.0f;
 }
 void cmac_net::clear_weights(){
 
-    for (int i = 0; i < _memory_size; i++) _weights[i] *= 0;
+    for (int i = 0; i < _memory_size; i++) _weights[i] = 0.0f;
 }
 void cmac_net::drop_traces() {
     for (int i = 0; i < _memory_size; i++) _traces[i] *= _gamma * _lambda;
@@ -75,16 +75,24 @@ void cmac_net::drop_traces() {
 
 void cmac_net::update_traces(int hash) {
     for (int i = 0; i < _num_hashings; i++) {
-        for (int j = 0; j < _num_tilings; j++) {
-            if (i != hash) _traces[_hashings[i][j]] = 0.0f;
+        if(i != hash){
+            for (int j = 0; j < _num_tilings; j++) {
+                _traces[_hashings[i][j]] = 0.0f;
+            }
         }
     }
     for (int i = 0; i < _num_tilings; i++) _traces[_hashings[hash][i]] = 1.0f;
 }
 void cmac_net::generate_tiles(float* input) {
-    for (int i = 0; i < _num_hashings; i++)
-        GetTiles(_hashings[i], _num_tilings, input, _num_inputs, _memory_size,
+    float input_tmp[_num_inputs];
+    for (int i = 0; i< _num_inputs; i++){
+        input_tmp[i] = input[i]/_tile_sub_dimension[i];
+    }
+    for (int i = 0; i < _num_hashings; i++){
+
+        GetTiles(_hashings[i], _num_tilings, input_tmp, _num_inputs, _memory_size,
                  i);
+    }
 }
 
 void cmac_net::return_value(float * output, int hash) {

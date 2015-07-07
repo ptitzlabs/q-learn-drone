@@ -29,4 +29,7 @@ class model{
     float * _init_state;
     float * _cur_state;
     float ** _state_limits;
+#ifdef TRAJECTORY_SAVE_ON
+    std::ofstream _trajectory_file;
+#endif
 };

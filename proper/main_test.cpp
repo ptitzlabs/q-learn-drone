@@ -121,10 +121,10 @@ int main(int argc, const char** argv) {
     q.report();
     // q.run_episode();
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 5; i++) {
         printf("Doing run %i\n", i);
         net.clear_weights();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
             q.run_episode();
         }
     }
