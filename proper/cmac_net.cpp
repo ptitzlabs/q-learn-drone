@@ -156,3 +156,5 @@ void cmac_net::read_weights(char * filename){
     read(file,(char *)_weights, _memory_size*sizeof(float));
     close(file);
 }
+
+

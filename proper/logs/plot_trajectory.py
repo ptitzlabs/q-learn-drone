@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt2
 import csv
@@ -24,6 +25,7 @@ plt.figure(1)
 plt.plot(y[k],x[k])
 plt.ylabel('some numbers')
 plt.draw()
+
 trajectory = []
 with open('trajectory2.txt','rb') as csvfile:
     traj_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
@@ -44,5 +46,60 @@ for xx,yy in trajectory:
 plt.figure(2)
 plt.plot(y[k],x[k])
 plt.ylabel('some numbers')
+plt.draw()
+
+
+contour_x = [];
+contour_y = [];
+contour_z = [];
+
+
+with open('contour0_x.csv','rb') as csvfile:
+    traj_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    for line in traj_reader:
+        contour_x.append(line)
+with open('contour0_y.csv','rb') as csvfile:
+    traj_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    for line in traj_reader:
+        contour_y.append(line)
+with open('contour0_z.csv','rb') as csvfile:
+    traj_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    for line in traj_reader:
+        contour_z.append(line)
+
+plt.figure(3)
+plt.contourf(contour_x,contour_y,contour_z)
+plt.draw()
+with open('contour1_x.csv','rb') as csvfile:
+    traj_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    for line in traj_reader:
+        contour_x.append(line)
+with open('contour1_y.csv','rb') as csvfile:
+    traj_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    for line in traj_reader:
+        contour_y.append(line)
+with open('contour1_z.csv','rb') as csvfile:
+    traj_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    for line in traj_reader:
+        contour_z.append(line)
+
+plt.figure(4)
+plt.contourf(contour_x,contour_y,contour_z)
+plt.draw()
+with open('contour2_x.csv','rb') as csvfile:
+    traj_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    for line in traj_reader:
+        contour_x.append(line)
+with open('contour2_y.csv','rb') as csvfile:
+    traj_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    for line in traj_reader:
+        contour_y.append(line)
+with open('contour2_z.csv','rb') as csvfile:
+    traj_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    for line in traj_reader:
+        contour_z.append(line)
+
+plt.figure(5)
+plt.contourf(contour_x,contour_y,contour_z)
 plt.draw()
 plt.show()

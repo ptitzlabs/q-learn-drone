@@ -1,6 +1,8 @@
 *.o
 *.out
 .*.sw[op]
+proper/*.csv
+proper/logs
 *~
 qt_example
 sandbox

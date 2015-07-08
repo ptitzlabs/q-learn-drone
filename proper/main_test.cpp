@@ -2,6 +2,7 @@
 #include "cmac_net.h"
 #include "model.h"
 #include "q_learn.h"
+#include "qutils.h"
 
 // int find_max(int size, float* arr) {
 // int max_index = 0;
@@ -121,15 +122,44 @@ int main(int argc, const char** argv) {
     q.report();
     // q.run_episode();
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 2; i++) {
         printf("Doing run %i\n", i);
         net.clear_weights();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 100; i++) {
             q.run_episode();
         }
     }
 
     // run_episode(&net, &m);
+    //
+    //
+    //
+    float* xx = new float[4];
+    float* yy = new float[4];
+
+    float** zz = new float* [4];
+
+    for (int i = 0; i < 4; i++) zz[i] = new float[4];
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            xx[i] = i;
+            yy[j] = j;
+            zz[i][j] = i + j / 10.0f;
+        }
+    }
+
+    save_arr_2d(4,4,xx,yy,zz,(char*)"check_2d");
+
+
+    delete[] xx;
+    delete[] yy;
+    for (int i = 0; i<4; i++) delete[] zz[i];
+    delete[] zz;
+
+    q.write_contour((char*)"logs/contour",0,1000,1000);
+    q.write_contour((char*)"logs/contour",1,1000,1000);
+    q.write_contour((char*)"logs/contour",2,1000,1000);
 
     return 0;
 }

@@ -161,3 +161,35 @@ void q_learn::report() {
     // printf("Memory size:       %i\n", _memory_size);
     // printf("alpha:              %.2f\n", _alpha * _num_tilings);
 }
+void q_learn::write_contour(char * filename, int id, int n, int m){
+   char  buffer[256];
+   sprintf(buffer,"%s%i",filename,id);
+
+   float *xx = new float[n];
+   float *yy = new float[m];
+   float **zz = new float * [n];
+   for (int i = 0; i< n; i++) zz[i] = new float [m];
+
+   float ** limits = _m->get_state_limits();
+
+   float x_step = (limits[0][1]-limits[0][0])/float(n-1);
+   float y_step = (limits[1][1]-limits[1][0])/float(n-1);
+
+   for (int i = 0; i< n; i++) xx[i] = limits[0][0]+x_step*(float)i;
+   for (int i = 0; i< m; i++) yy[i] = limits[0][0]+y_step*(float)i;
+   float in_tmp[2];
+
+   for(int i = 0; i<n; i++){
+   for (int j=0; j<m; j++){
+       in_tmp[0] = xx[i];
+       in_tmp[1] = yy[j];
+
+
+   _net->generate_tiles(in_tmp);
+   _net->return_value(&zz[i][j],id);
+
+   }}
+
+   save_arr_2d(n,m,xx,yy,zz,buffer);
+
+}

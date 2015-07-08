@@ -27,6 +27,7 @@ class q_learn {
     void run_episode();
     void run_step();
     void report();
+    void write_contour(char* filename, int id, int n = 100, int m = 100);
 
    private:
 

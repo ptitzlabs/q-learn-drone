@@ -77,6 +77,7 @@ void model::report() {
 }
 
 float* model::get_state() { return _cur_state; }
+float ** model::get_state_limits() {return _state_limits;}
 float model::get_state(int n) { return _cur_state[n]; }
 
 void model::set_state(float* state) { _cur_state = state; }

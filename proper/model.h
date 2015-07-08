@@ -18,6 +18,7 @@ class model{
     void report();
     float * get_state();
     float get_state(int n);
+    float **get_state_limits();
     void set_state(int n, float state);
     void set_state(float *state);
 
