@@ -234,7 +234,7 @@ void load_F()
     state_vars[0] = mcar_position / POS_WIDTH;
     state_vars[1] = mcar_velocity / VEL_WIDTH;
     for (int a = 0; a < M; a++)
-        GetTiles(&F[a][0], NUM_TILINGS, state_vars, 2, N, a);
+        get_tiles1(&F[a][0], NUM_TILINGS, state_vars, 2, N, a);
 }
 
 void mcar_init()

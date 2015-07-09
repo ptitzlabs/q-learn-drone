@@ -1,13 +1,9 @@
-#define Q_LEARN_H
-#ifndef RL_HEADERS_H
+#ifndef _Q_LEARN_H_
+#define _Q_LEARN_H_
 #include "RL_headers.h"
-#endif
-#ifndef CMAC_NET_H
 #include "cmac_net.h"
-#endif
-#ifndef MODEL_H
 #include "model.h"
-#endif
+#include "q_controller.h"
 
 class q_learn {
    public:
@@ -52,3 +48,4 @@ class q_learn {
     //std::ofstream _myfile;
 
 };
+#endif

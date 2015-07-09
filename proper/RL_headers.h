@@ -1,4 +1,5 @@
-#define RL_HEADERS_H
+#ifndef _RL_HEADERS_H_
+#define _RL_HEADERS_H_
 
 #include <cmath>
 #include <cstdio>
@@ -14,4 +15,5 @@
 
 
 #define TRAJECTORY_SAVE_ON
-//#include "cmac_net.h"
+//#include "cmac_net.
+#endif

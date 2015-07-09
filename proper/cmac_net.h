@@ -1,10 +1,8 @@
-#ifndef RL_HEADERS_H
+#ifndef _CMAC_NET_H_
+#define _CMAC_NET_H_
 #include "RL_headers.h"
-#endif
-
 #include "tiles.h"
 
-#define CMAC_NET_H
 
 class cmac_net {
    public:
@@ -23,6 +21,10 @@ class cmac_net {
     void update(float* state, float target, int hash);
     void report();
     int get_num_hashings();
+    float * get_weights();
+    float * get_tile_sub_dimension();
+    int get_memory_size();
+    int get_num_tilings();
 
     void read_weights(char* filename);
     void write_weights(char* filename);
@@ -45,3 +47,4 @@ class cmac_net {
 
     float* _outputs_tmp;
 };
+#endif

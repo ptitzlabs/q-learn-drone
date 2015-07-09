@@ -1,8 +1,7 @@
-
-#ifndef RL_HEADERS_H
+#ifndef _MODEL_H_
+#define _MODEL_H_
 #include "RL_headers.h"
-#endif
-#define MODEL_H
+
 
 class model{
    public:
@@ -21,6 +20,7 @@ class model{
     float **get_state_limits();
     void set_state(int n, float state);
     void set_state(float *state);
+    int get_num_states();
 
     void reset();
    private:
@@ -34,3 +34,4 @@ class model{
     std::ofstream _trajectory_file;
 #endif
 };
+#endif

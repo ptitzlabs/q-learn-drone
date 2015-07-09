@@ -120,85 +120,96 @@ void q_learn::run_step() {
 
     // std::cout <<"gamma:"<< std::endl;
     _action = find_max();
-    if (with_probability(_epsilon)) {
-        _action = rand() % _size_q;
-    }
-    if (!goal_reached()) delta += _gamma * _q[_action];
-    _net->quick_update(delta);
-    calc_q(_action);
-}
-
-void q_learn::report() {
-    printf("\n##############\n");
-    printf("Q-learn report:\n");
-    std::cout << "Max steps: " << _max_steps << std::endl << "gamma: " << _gamma
-              << "\nepsilon: " << _epsilon
-              << "\nSize of Q (number of actions): " << _size_q
-              << "\nCurrent Q: ";
-    for (int i = 0; i < _size_q; i++) std::cout << _q[i] << "  ";
-
-    std::cout << "\nCurrent action:" << _action
-              << "\nNumber of action values: " << _n_action_levels
-              << "\nAction values:";
-    for (int i = 0; i < _n_action_levels; i++)
-        std::cout << _action_levels[i] << "  ";
-    std::cout << "\nNumber of goal states: " << _n_goal_states
-              << "\nGoal state inices: ";
-    for (int i = 0; i < _n_goal_states; i++)
-        std::cout << _goal_state_index[i] << "  ";
-    std::cout << "\nGoal states: ";
-    for (int i = 0; i < _n_goal_states; i++)
-        std::cout << _curr_goal[_goal_state_index[i]] << "  ";
-
-    _m->report();
-    _net->report();
-    // printf("Number of inputs:  %i\n", _num_inputs);
-    // printf("Tile dimension: ");
-    // for (int i = 0; i < _num_inputs; i++)
-    // printf("%i: (%f) ",i, _tile_dimension[i]);
-    // printf("\n");
-    // printf("Number of tilings:  %i\n", _num_tilings);
-    // printf("Memory size:       %i\n", _memory_size);
-    // printf("alpha:              %.2f\n", _alpha * _num_tilings);
-}
-void q_learn::write_contour(char* filename, int id, int n, int m) {
-    char buffer[256];
-    sprintf(buffer, "%s%i", filename, id);
-
-    float* xx = new float[n];
-    float* yy = new float[m];
-    float** zz = new float* [m];
-    for (int i = 0; i < m; i++) zz[i] = new float[n];
-
-    float** limits = _m->get_state_limits();
-
-    float x_step = (limits[0][1] - limits[0][0]) / float(n - 1);
-    float y_step = (limits[1][1] - limits[1][0]) / float(n - 1);
-    std::cout << "xstep: " << x_step << " ystep: " << y_step
-              << " limits: " << limits[0][0] << " " << limits[0][1] << "; "
-              << " " << limits[1][0] << " " << limits[1][1]
-              << std::endl;
-
-    for (int i = 0; i < n; i++) {
-        xx[i] = limits[0][0] + x_step * (float)i;
-        std::cout<<xx[i]<<" ";
-    }
-    std::cout<<std::endl;
-    for (int i = 0; i < m; i++){
-     yy[i] = limits[1][0] + y_step * (float)i;
-        std::cout<<yy[i]<<" ";
-    }
-    float in_tmp[2];
-
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < m; j++) {
-            in_tmp[0] = xx[i];
-            in_tmp[1] = yy[j];
-
-            _net->generate_tiles(in_tmp);
-            _net->return_value(&zz[j][i], id);
+    int index_chk;
+    blabla(index_chk);
+    gen_input_index(index_chk, 1, _m->get_state(), 0, 0,
+                    0, 0, 0, 0,
+                    0,0) ;
+    //gen_input_index(index_chk, num_inputs, state, goal, tile_sub_dimension,
+                    //num_states, input_levels, num_input_levels, weights,
+                    //num_weights, num_tilings) ;
+        // gen_input_index(index_chk, (int)1, _m->get_state, (float*)0,
+        //_net->get_tile_sub_dimension(), _m->get_num_states,
+        //_action_levels, _size_q,_net->get_weights(), _net->get_memory_size,
+        //_net->get_num_tilings());
+        if (with_probability(_epsilon)) {
+            _action = rand() % _size_q;
         }
+        if (!goal_reached()) delta += _gamma * _q[_action];
+        _net->quick_update(delta);
+        calc_q(_action);
     }
 
-    save_arr_2d(m, n, yy, xx, zz, buffer);
-}
+    void q_learn::report() {
+        printf("\n##############\n");
+        printf("Q-learn report:\n");
+        std::cout << "Max steps: " << _max_steps << std::endl
+                  << "gamma: " << _gamma << "\nepsilon: " << _epsilon
+                  << "\nSize of Q (number of actions): " << _size_q
+                  << "\nCurrent Q: ";
+        for (int i = 0; i < _size_q; i++) std::cout << _q[i] << "  ";
+
+        std::cout << "\nCurrent action:" << _action
+                  << "\nNumber of action values: " << _n_action_levels
+                  << "\nAction values:";
+        for (int i = 0; i < _n_action_levels; i++)
+            std::cout << _action_levels[i] << "  ";
+        std::cout << "\nNumber of goal states: " << _n_goal_states
+                  << "\nGoal state inices: ";
+        for (int i = 0; i < _n_goal_states; i++)
+            std::cout << _goal_state_index[i] << "  ";
+        std::cout << "\nGoal states: ";
+        for (int i = 0; i < _n_goal_states; i++)
+            std::cout << _curr_goal[_goal_state_index[i]] << "  ";
+
+        _m->report();
+        _net->report();
+        // printf("Number of inputs:  %i\n", _num_inputs);
+        // printf("Tile dimension: ");
+        // for (int i = 0; i < _num_inputs; i++)
+        // printf("%i: (%f) ",i, _tile_dimension[i]);
+        // printf("\n");
+        // printf("Number of tilings:  %i\n", _num_tilings);
+        // printf("Memory size:       %i\n", _memory_size);
+        // printf("alpha:              %.2f\n", _alpha * _num_tilings);
+    }
+    void q_learn::write_contour(char* filename, int id, int n, int m) {
+        char buffer[256];
+        sprintf(buffer, "%s%i", filename, id);
+
+        float* xx = new float[n];
+        float* yy = new float[m];
+        float** zz = new float* [m];
+        for (int i = 0; i < m; i++) zz[i] = new float[n];
+
+        float** limits = _m->get_state_limits();
+
+        float x_step = (limits[0][1] - limits[0][0]) / float(n - 1);
+        float y_step = (limits[1][1] - limits[1][0]) / float(n - 1);
+        std::cout << "xstep: " << x_step << " ystep: " << y_step
+                  << " limits: " << limits[0][0] << " " << limits[0][1] << "; "
+                  << " " << limits[1][0] << " " << limits[1][1] << std::endl;
+
+        for (int i = 0; i < n; i++) {
+            xx[i] = limits[0][0] + x_step * (float)i;
+            std::cout << xx[i] << " ";
+        }
+        std::cout << std::endl;
+        for (int i = 0; i < m; i++) {
+            yy[i] = limits[1][0] + y_step * (float)i;
+            std::cout << yy[i] << " ";
+        }
+        float in_tmp[2];
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                in_tmp[0] = xx[i];
+                in_tmp[1] = yy[j];
+
+                _net->generate_tiles(in_tmp);
+                _net->return_value(&zz[j][i], id);
+            }
+        }
+
+        save_arr_2d(m, n, yy, xx, zz, buffer);
+    }

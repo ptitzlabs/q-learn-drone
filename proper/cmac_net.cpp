@@ -1,5 +1,7 @@
 #include "cmac_net.h"
 
+
+
 cmac_net::cmac_net(int num_inputs, float* tile_dimension, int tile_resolution,
                    int memory_size, int num_tilings, int num_hashings,
                    float alpha, float gamma, float lambda) {
@@ -90,7 +92,7 @@ void cmac_net::generate_tiles(float* input) {
     }
     for (int i = 0; i < _num_hashings; i++){
 
-        GetTiles(_hashings[i], _num_tilings, input_tmp, _num_inputs, _memory_size,
+        get_tiles1(_hashings[i], _num_tilings, input_tmp, _num_inputs, _memory_size,
                  i);
     }
 }
@@ -115,7 +117,7 @@ void cmac_net::quick_update(float delta){
 }
 void cmac_net::update(float* input, float target, int hash) {
     int tiles_array[_num_tilings];
-    GetTiles(tiles_array, _num_tilings, input, _num_inputs, _memory_size, hash);
+    get_tiles1(tiles_array, _num_tilings, input, _num_inputs, _memory_size, hash);
     float output = 0;
 
     for (int i = 0; i < _num_tilings; i++) output += _weights[tiles_array[i]];
@@ -144,6 +146,19 @@ void cmac_net::report() {
 int cmac_net::get_num_hashings(){
     return _num_hashings;
 
+}
+float * cmac_net::get_weights(){
+    return _weights;
+}
+int cmac_net::get_memory_size(){
+    return _memory_size;
+}
+int cmac_net::get_num_tilings(){
+    return _num_tilings;
+}
+
+float * cmac_net::get_tile_sub_dimension(){
+    return _tile_sub_dimension;
 }
 
 void cmac_net::write_weights(char * filename){
