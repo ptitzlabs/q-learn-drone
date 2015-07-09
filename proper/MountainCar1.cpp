@@ -22,6 +22,7 @@ Written by Rich Sutton 12/17/00
 #include "tiles.h"
 #include "stdlib.h"
 #include <cmath>
+#include "qutils.h"
 
 #define N 3000          // number of parameters to theta, memory size
 #define M 3             // number of actions
@@ -51,7 +52,62 @@ void mcar_step(int a);           // update car state for given action
 bool mcar_goal_p();              // is car at goal?
 using namespace std;
 
+float mcar_position, mcar_velocity;
 ofstream trajectory_file;
+void write_contour(char* filename, int id, int n, int m) {
+    char buffer[256];
+    sprintf(buffer, "%s%i", filename, id);
+
+    float* xx = new float[n];
+    float* yy = new float[m];
+    float** zz = new float* [m];
+    for (int i = 0; i < m; i++) zz[i] = new float[n];
+
+    float** limits = new float*[2];
+    limits[0] = new float[2];
+    limits[1] = new float[2];
+
+    limits[0][0] = -0.07;
+    limits[0][1] = 0.07;
+    limits[1][0] = -1.2;
+    limits[1][1] = 0.6;
+
+
+    float x_step = (limits[0][1] - limits[0][0]) / float(n - 1);
+    float y_step = (limits[1][1] - limits[1][0]) / float(n - 1);
+    std::cout << "xstep: " << x_step << " ystep: " << y_step
+              << " limits: " << limits[0][0] << " " << limits[0][1] << "; "
+              << " " << limits[1][0] << " " << limits[1][1]
+              << std::endl;
+
+    for (int i = 0; i < n; i++) {
+        xx[i] = limits[0][0] + x_step * (float)i;
+        //std::cout<<xx[i]<<" ";
+    }
+    std::cout<<std::endl;
+    for (int i = 0; i < m; i++){
+     yy[i] = limits[1][0] + y_step * (float)i;
+        //std::cout<<yy[i]<<" ";
+    }
+    float in_tmp[2];
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            mcar_velocity = xx[i];
+            mcar_position = yy[j];
+
+            load_F();
+            load_Q();
+
+            zz[j][i] = Q[id];
+
+            //_net->generate_tiles(in_tmp);
+            //_net->return_value(&zz[j][i], id);
+        }
+    }
+
+    save_arr_2d(m, n, yy, xx, zz, buffer);
+}
 int main()
 
 // The main program just does a bunch or runs, each consisting of some episodes.
@@ -67,6 +123,11 @@ int main()
             cout << episode(10000) << endl;
     }
     trajectory_file.close();
+
+    for (int i = 0; i<3; i++) write_contour((char*)"logs/contour_barto",i,500,500);
+
+
+
     return 0;
 }
 
@@ -156,7 +217,6 @@ bool with_probability(float p)
 ///////////////  Mountain Car code begins here  ///////////////
 
 // Mountain Car Global variables:
-float mcar_position, mcar_velocity;
 
 #define mcar_min_position -1.2
 #define mcar_max_position 0.6

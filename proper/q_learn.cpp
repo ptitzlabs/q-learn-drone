@@ -19,8 +19,8 @@ q_learn::q_learn(cmac_net* net, model* m, int n_action_levels,
     _action_levels = action_levels;
     calc_q();
     _action = find_max();
-  //_myfile.open ("example.txt");
-  //_myfile << "Writing this to a file.\n";
+    //_myfile.open ("example.txt");
+    //_myfile << "Writing this to a file.\n";
 }
 
 q_learn::~q_learn() {
@@ -31,23 +31,23 @@ q_learn::~q_learn() {
 }
 
 int q_learn::find_max() {
-    //std::cout<<"Finding max:\n";
+    // std::cout<<"Finding max:\n";
     int max_index = 0;
     float max_val = _q[0];
     int num_ties = 1;
     for (int i = 1; i < _size_q; i++) {
-    //std::cout<<"loop i\n";
+        // std::cout<<"loop i\n";
         if (_q[i] >= max_val) {
-    //std::cout<<"cond 1\n";
+            // std::cout<<"cond 1\n";
             if (_q[i] > max_val) {
-    //std::cout<<"cond 2\n";
+                // std::cout<<"cond 2\n";
                 max_val = _q[i];
                 max_index = i;
             } else {
-    //std::cout<<"cond else\n";
+                // std::cout<<"cond else\n";
                 num_ties++;
                 if (rand() % num_ties == 0) {
-    //std::cout<<"cond 3\n";
+                    // std::cout<<"cond 3\n";
                     max_val = _q[i];
                     max_index = i;
                 }
@@ -102,8 +102,8 @@ void q_learn::run_episode() {
         run_step();
     }
     printf("%i\n", step);
-    //print_arr_1d(2, _m->get_state());
-    //printf("\n");
+    // print_arr_1d(2, _m->get_state());
+    // printf("\n");
 }
 
 void q_learn::run_step() {
@@ -111,19 +111,19 @@ void q_learn::run_step() {
     _net->update_traces(_action);
     _m->model_step(&_action_levels[_action]);
     // print_arr_1d(2,_m->get_state());
-    //std::cout << std::endl;
+    // std::cout << std::endl;
     float reward = -1;
     float delta = reward - _q[_action];
     _net->generate_tiles(_m->get_state());
     calc_q();
-    //print_arr_1d(3, _q);
+    // print_arr_1d(3, _q);
 
-    //std::cout <<"gamma:"<< std::endl;
+    // std::cout <<"gamma:"<< std::endl;
     _action = find_max();
     if (with_probability(_epsilon)) {
         _action = rand() % _size_q;
     }
-    if (!goal_reached()) delta += _gamma*_q[_action];
+    if (!goal_reached()) delta += _gamma * _q[_action];
     _net->quick_update(delta);
     calc_q(_action);
 }
@@ -161,35 +161,44 @@ void q_learn::report() {
     // printf("Memory size:       %i\n", _memory_size);
     // printf("alpha:              %.2f\n", _alpha * _num_tilings);
 }
-void q_learn::write_contour(char * filename, int id, int n, int m){
-   char  buffer[256];
-   sprintf(buffer,"%s%i",filename,id);
+void q_learn::write_contour(char* filename, int id, int n, int m) {
+    char buffer[256];
+    sprintf(buffer, "%s%i", filename, id);
 
-   float *xx = new float[n];
-   float *yy = new float[m];
-   float **zz = new float * [n];
-   for (int i = 0; i< n; i++) zz[i] = new float [m];
+    float* xx = new float[n];
+    float* yy = new float[m];
+    float** zz = new float* [m];
+    for (int i = 0; i < m; i++) zz[i] = new float[n];
 
-   float ** limits = _m->get_state_limits();
+    float** limits = _m->get_state_limits();
 
-   float x_step = (limits[0][1]-limits[0][0])/float(n-1);
-   float y_step = (limits[1][1]-limits[1][0])/float(n-1);
+    float x_step = (limits[0][1] - limits[0][0]) / float(n - 1);
+    float y_step = (limits[1][1] - limits[1][0]) / float(n - 1);
+    std::cout << "xstep: " << x_step << " ystep: " << y_step
+              << " limits: " << limits[0][0] << " " << limits[0][1] << "; "
+              << " " << limits[1][0] << " " << limits[1][1]
+              << std::endl;
 
-   for (int i = 0; i< n; i++) xx[i] = limits[0][0]+x_step*(float)i;
-   for (int i = 0; i< m; i++) yy[i] = limits[0][0]+y_step*(float)i;
-   float in_tmp[2];
+    for (int i = 0; i < n; i++) {
+        xx[i] = limits[0][0] + x_step * (float)i;
+        std::cout<<xx[i]<<" ";
+    }
+    std::cout<<std::endl;
+    for (int i = 0; i < m; i++){
+     yy[i] = limits[1][0] + y_step * (float)i;
+        std::cout<<yy[i]<<" ";
+    }
+    float in_tmp[2];
 
-   for(int i = 0; i<n; i++){
-   for (int j=0; j<m; j++){
-       in_tmp[0] = xx[i];
-       in_tmp[1] = yy[j];
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            in_tmp[0] = xx[i];
+            in_tmp[1] = yy[j];
 
+            _net->generate_tiles(in_tmp);
+            _net->return_value(&zz[j][i], id);
+        }
+    }
 
-   _net->generate_tiles(in_tmp);
-   _net->return_value(&zz[i][j],id);
-
-   }}
-
-   save_arr_2d(n,m,xx,yy,zz,buffer);
-
+    save_arr_2d(m, n, yy, xx, zz, buffer);
 }

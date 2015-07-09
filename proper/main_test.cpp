@@ -157,9 +157,8 @@ int main(int argc, const char** argv) {
     for (int i = 0; i<4; i++) delete[] zz[i];
     delete[] zz;
 
-    q.write_contour((char*)"logs/contour",0,1000,1000);
-    q.write_contour((char*)"logs/contour",1,1000,1000);
-    q.write_contour((char*)"logs/contour",2,1000,1000);
+    for(int i = 0; i<3; i++)
+    q.write_contour((char*)"logs/contour",i,500,500);
 
     return 0;
 }

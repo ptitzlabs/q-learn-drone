@@ -29,7 +29,7 @@ void save_arr_2d(int n, int m, float* xarr, float* yarr, float** zarr,
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             file_x << xarr[i];
-            file_y << xarr[j];
+            file_y << yarr[j];
             file_z << zarr[i][j];
             if (j < m - 1) {
                 file_x << ", ";
