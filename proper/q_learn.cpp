@@ -120,11 +120,12 @@ void q_learn::run_step() {
 
     // std::cout <<"gamma:"<< std::endl;
     _action = find_max();
-    int index_chk;
-    blabla(index_chk);
-    gen_input_index(index_chk, 1, _m->get_state(), 0, 0,
-                    0, 0, 0, 0,
-                    0,0) ;
+    int index_chk = 0;
+    //blabla(index_chk);
+    gen_input_index_max_q(&index_chk, 0, _m->get_state(), 0, _net->get_tile_sub_dimension(),
+                    _m->get_num_states(), 0, _n_action_levels , _net->get_weights(),
+                    _net->get_memory_size(),_net->get_num_tilings()) ;
+    //std::cout<<"Action: "<<_action <<" action, no bs: "<<index_chk<<std::endl;
     //gen_input_index(index_chk, num_inputs, state, goal, tile_sub_dimension,
                     //num_states, input_levels, num_input_levels, weights,
                     //num_weights, num_tilings) ;

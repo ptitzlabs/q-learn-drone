@@ -3,7 +3,8 @@
 void blabla(int in){
     in = 0;
 }
-void gen_input_index(int input_index, int num_inputs, float* state, float* goal,
+void read_cmac_weights_f(float* weights, int * num_weights, char* filename);
+void gen_input_index_max_q(int *input_index, int num_inputs, float* state, float* goal,
                float *tile_sub_dimension, int num_states, float* input_levels,
                int num_input_levels, float* weights, int num_weights,
                int num_tilings) {
@@ -28,14 +29,15 @@ void gen_input_index(int input_index, int num_inputs, float* state, float* goal,
         if (q[i] >= max_val) {
             if (q[i] > max_val) {
                 max_val = q[i];
-                input_index = i;
+                *input_index = i;
             } else {
                 num_ties++;
                 if (rand() % num_ties == 0) {
                     max_val = q[i];
-                    input_index = i;
+                    *input_index = i;
                 }
             }
         }
     }
+    /**input_index = 999;*/
 }
