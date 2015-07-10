@@ -165,7 +165,10 @@ void cmac_net::write_weights(char * filename){
     //int file = open(filename, O_BINARY | O_WRONLY);
     //write(file,(char *)_weights, _memory_size*sizeof(float));
     //close(file);
-    save_arr_1d(_memory_size,_weights,filename);
+    FILE * weights_file = fopen(filename,"wb");
+        save_arr_1d(_memory_size,_weights,filename);
+    fwrite(_weights,sizeof(_weights[0]),sizeof(_weights)/sizeof(_weights[0]),weights_file);
+    fclose(weights_file);
 }
 void cmac_net::read_weights(char * filename){
     //int file = open(filename, O_BINARY | O_RDONLY);
