@@ -9,6 +9,25 @@ void print_arr_1d(int n, float* arr) {
     std::cout << "]";
 }
 
+void save_arr_1d(int n, float* arr, char* filename) {
+    size_t len = strlen(filename);
+    std::string filename_s;
+    filename_s = filename;
+    std::ofstream file;
+
+    char * filename_tmp = new char[strlen(filename) +5];
+
+    file.open(filename_s.insert(len,".csv").c_str(),
+                std::ofstream::out | std::ofstream::trunc);
+    file<<n<<"\n";
+    for (int i = 0; i < n; i++) {
+            file << arr[i];
+                file << "\n";
+    }
+    file.close();
+    delete[] filename_tmp;
+    filename_tmp = NULL;
+}
 void save_arr_2d(int n, int m, float* xarr, float* yarr, float** zarr,
                  char* filename) {
     size_t len = strlen(filename);

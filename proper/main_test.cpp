@@ -157,6 +157,10 @@ int main(int argc, const char** argv) {
     for (int i = 0; i<4; i++) delete[] zz[i];
     delete[] zz;
 
+    net.write_weights((char*)"parm/weights.txt");
+    net.read_weights((char*)"parm/weights.txt");
+
+
     for(int i = 0; i<3; i++)
     q.write_contour((char*)"logs/contour",i,500,500);
 

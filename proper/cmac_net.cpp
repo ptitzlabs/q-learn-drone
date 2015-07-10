@@ -166,11 +166,18 @@ void cmac_net::write_weights(char * filename){
     //write(file,(char *)_weights, _memory_size*sizeof(float));
     //close(file);
     FILE * weights_file = fopen(filename,"wb");
-        save_arr_1d(_memory_size,_weights,filename);
-    fwrite(_weights,sizeof(_weights[0]),sizeof(_weights)/sizeof(_weights[0]),weights_file);
+    fwrite(_weights,sizeof(float),_memory_size,weights_file);
     fclose(weights_file);
 }
 void cmac_net::read_weights(char * filename){
+    float weights[_memory_size];
+    FILE * weights_file = fopen(filename,"rb");
+    fread(weights,sizeof(float),_memory_size,weights_file);
+    fclose(weights_file);
+
+    for (int i = 0; i<_memory_size; i++){
+        std::cout<<weights[i]<<std::endl;
+    }
     //int file = open(filename, O_BINARY | O_RDONLY);
     //read(file,(char *)_weights, _memory_size*sizeof(float));
     //close(file);

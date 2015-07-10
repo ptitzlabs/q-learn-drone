@@ -14,4 +14,5 @@
 #endif
 
 void print_arr_1d(int n, float * arr);
+void save_arr_1d(int n, float* arr, char* filename);
 void save_arr_2d(int n, int m, float* xarr, float* yarr, float** zarr, char* filename);
