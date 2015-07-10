@@ -162,14 +162,15 @@ float * cmac_net::get_tile_sub_dimension(){
 }
 
 void cmac_net::write_weights(char * filename){
-    int file = open(filename, O_BINARY | O_WRONLY);
-    write(file,(char *)_weights, _memory_size*sizeof(float));
-    close(file);
+    //int file = open(filename, O_BINARY | O_WRONLY);
+    //write(file,(char *)_weights, _memory_size*sizeof(float));
+    //close(file);
+    save_arr_1d(_memory_size,_weights,filename);
 }
 void cmac_net::read_weights(char * filename){
-    int file = open(filename, O_BINARY | O_RDONLY);
-    read(file,(char *)_weights, _memory_size*sizeof(float));
-    close(file);
+    //int file = open(filename, O_BINARY | O_RDONLY);
+    //read(file,(char *)_weights, _memory_size*sizeof(float));
+    //close(file);
 }
 
 
