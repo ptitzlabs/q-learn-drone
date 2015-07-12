@@ -7,3 +7,5 @@ proper/logs
 qt_example
 sandbox
 trash
+src/Makefile
+src/main_test.cpp

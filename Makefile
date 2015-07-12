@@ -1,48 +1,11 @@
-#Makefile
-CXX = /usr/bin/c++
-EXEEXT = .o 
+all: lib/joystick.o lib/glhelper.o
+	g++ main.cpp lib/joystick.o lib/glhelper.o -o bin/main -L/usr/lib `sdl-config --cflags --libs` -lSDL_ttf -lSDL_image -lGL -lGLU -lpthread
 
-LIB_TAG = d
-PKG_CONFIG_ENV = PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig"
-RPATHCMD =
-QT_MOC_EXECUTABLE = /usr/lib/x86_64-linux-gnu/qt4/bin/moc
-qt_RPATHCMD =
+lib/joystick.o: src/joystick.h src/joystick.cc
+	g++ src/joystick.cc -c -o lib/joystick.o
 
-qt_EXECUTABLES_list =\
-	qt_example$(EXEEXT)
-
-main_EXECUTABLES_list = \
-	main$(EXEEXT)
-
-testing_EXECUTABLES_list = \
-	testing$(EXEEXT)
-
-EXECUTABLES_list = \
-	$(main_EXECUTABLES_list)
-	#$(qt_EXECUTABLES_list)\
-
-
-all: $(EXECUTABLES_list)
+lib/glhelper.o: src/glhelper.h src/glhelper.cc
+	g++ src/glhelper.cc -c -o lib/glhelper.o
 
 clean:
-	rm -f $(EXECUTABLES_list)
-
-testing: $(testing_EXECUTABLES_list)
-
-testing$(EXEEXT): model_testing.cpp model_sim.cpp cmac_net.cpp Q_learn.cpp tiles.c
-	$(CXX) model_testing.cpp model_sim.cpp cmac_net.cpp Q_learn.cpp tiles.c -Wall -o $@
-
-#qt_example$(EXEEXT): qt_example.cpp qt_PlotWindow.cpp moc_qt_PlotWindow.cpp
-	#$(CXX) qt_example.cpp qt_PlotWindow.cpp moc_qt_PlotWindow.cpp -o $@ $(qt_RPATHCMD) `$(PKG_CONFIG_ENV) pkg-config --cflags --libs plplot$(LIB_TAG)-qt` `$(PKG_CONFIG_ENV) pkg-config --cflags --libs plplotd`
-
-#moc_qt_PlotWindow_interface.cpp: qt_PlotWindow_interface.h
-	#$(QT_MOC_EXECUTABLE) `$(PKG_CONFIG_ENV) pkg-config  --cflags-only-I plplot$(LIB_TAG)-qt` $< -o $@
-moc_qt_interface.cpp: qt_interface.h
-	$(QT_MOC_EXECUTABLE) `$(PKG_CONFIG_ENV) pkg-config  --cflags-only-I plplot$(LIB_TAG)-qt` $< -o $@
-
-main$(EXEEXT): main.cpp qt_interface.cpp moc_qt_interface.cpp 
-	$(CXX) main.cpp qt_interface.cpp moc_qt_interface.cpp testing.cpp cmac_net.cpp tiles.c -Wall -o $@ $(qt_RPATHCMD) `$(PKG_CONFIG_ENV) pkg-config --cflags --libs plplot$(LIB_TAG)-qt` `$(PKG_CONFIG_ENV) pkg-config --cflags --libs plplotd`
-#CC=g++
-#LIB=-lm -ldislnc -ldiscpp -ldislin
-#main: main.cpp tiles.h tiles.c interface.h interface.cpp
-	#$(CC) -o bin/main.o main.cpp interface.cpp $(LIB)
+	@rm -f *~ src/*~ lib/* bin/*
