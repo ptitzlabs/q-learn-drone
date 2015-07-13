@@ -9,3 +9,5 @@ sandbox
 trash
 src/Makefile
 src/main_test.cpp
+bin/main
+bin/*

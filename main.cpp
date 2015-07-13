@@ -7,6 +7,7 @@
 #include "src/joystick.h"
 #include "src/glhelper.h"
 
+using namespace std;
 cJoystick js;
 
 void joystick_listen() {
@@ -27,7 +28,7 @@ void joystick_listen() {
 
 }
 
-using namespace std;
+
 int main(int argc, char *argv[]) {
     cout << "Hello!\n";
 
