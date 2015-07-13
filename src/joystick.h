@@ -9,7 +9,7 @@
 #include <vector>
 #include <unistd.h>
 
-#define JOYSTICK_DEV "/dev/input/js1"
+#define JOYSTICK_DEV "/dev/input/js0"
 
 struct joystick_position {
 	float theta, r, x, y;
