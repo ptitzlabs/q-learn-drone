@@ -1,0 +1,24 @@
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:SDL_VideoInit
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   ...
+   obj:/usr/*lib*/libSDL*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   ...
+   obj:/usr/lib/x86_64-linux-gnu/libX11.so.*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   ...
+   fun:_dl_catch_error
+}

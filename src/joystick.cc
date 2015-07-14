@@ -11,10 +11,10 @@ cJoystick::cJoystick() {
 		ioctl(joystick_fd, JSIOCGVERSION, &version);
 		ioctl(joystick_fd, JSIOCGAXES, &axes);
 		ioctl(joystick_fd, JSIOCGBUTTONS, &buttons);
-		std::cout << "   Name: " << name << std::endl;
-		std::cout << "Version: " << version << std::endl;
-		std::cout << "   Axes: " << (int)axes << std::endl;
-		std::cout << "Buttons: " << (int)buttons << std::endl;
+		//std::cout << "   Name: " << name << std::endl;
+		//std::cout << "Version: " << version << std::endl;
+		//std::cout << "   Axes: " << (int)axes << std::endl;
+		//std::cout << "Buttons: " << (int)buttons << std::endl;
 		joystick_st->axis.reserve(axes);
 		joystick_st->button.reserve(buttons);
 		active = true;

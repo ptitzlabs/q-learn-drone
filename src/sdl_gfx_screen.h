@@ -8,6 +8,7 @@
 #include "RL_headers.h"
 #include <vector>
 #include <cmath>
+#include "qutils.h"
 
 struct line_object {
     int num_vertices;
@@ -33,9 +34,11 @@ class sdl_gfx_screen {
         void draw_mointain();
         void objects_init();
         void objects_draw();
-        void add_shape(int n, float* x, float* y, int* color,float scale_x = 1, float scale_y = 1);
+        void add_shape(int n,float* x, float* y,int* color,float scale_x = 1.0f, float scale_y = 1.0f);
         void object_scale(line_object obj, float scale_x, float scale_y);
         void object_move(line_object obj, float x_pos, float y_pos);
+        void update_car_rt(float loc);
+        void sdl_quit();
 
         bool sdl_status();
         
