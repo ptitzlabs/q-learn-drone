@@ -77,6 +77,10 @@ void model::report() {
 }
 
 float* model::get_state() { return _cur_state; }
+void model::get_state(float * state){
+    for (int i = 0; i < _num_states; i++) state[i] = _cur_state[i];
+
+}
 int model::get_num_states(){
     return _num_states;
 }

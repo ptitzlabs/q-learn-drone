@@ -9,66 +9,81 @@
 #include "src/glhelper.h"
 #include "src/sdl_gfx_screen.h"
 #include "src/model.h"
+#include "src/cmac_net.h"
+#include "src/q_learn.h"
 #include <thread>
 
 using namespace std;
 // cJoystick js;
 //
 const int k_window_width = 640;
-const int k_window_height = 480;
+const int k_window_height = 481;
 const char* k_window_title = "Mountain Car";
 
-void joystick_listen(joystick_position jp[2], bool joystick_buttons[5]) {
-    cout << "Initializing joystick..."<< endl;
-    cJoystick js;
-    sleep(1);
+void control_learn(float * model_state, cmac_net * net, cJoystick* js) {
+    cout << "Initializing learning..." << endl;
+    //Creating a model instance
+    float** state_limits;
+    state_limits = new float* [2];
+    state_limits[0] = new float[2];
+    state_limits[1] = new float[2];
+
+    state_limits[0][0] = -0.07;
+    state_limits[0][1] = 0.07;
+    state_limits[1][0] = -1.2;
+    state_limits[1][1] = 0.6;
+
+    float init_state[] = {0, -0.5};
+    model m(2, state_limits, init_state, 1);
+
+    for (int i = 0; i < 2; i++) {
+        delete[] state_limits[i];
+        state_limits[i] = NULL;
+    }
+    delete[] state_limits;
+    state_limits = NULL;
+    //Creating a q-learning algorithm instance
+    float action_levels[] = {0, 1, 2};
+    float goal[] = {0, 0.5};
+    int n_action_levels = 3;
+    int n_goal_states = 1;
+    int goal_state_index[] = {1};
+
+    q_learn q(net, &m, n_action_levels, action_levels, goal, n_goal_states,
+              goal_state_index);
+
+    net->clear_weights();
+
+
     bool active = true;
     while (active) {
-        jp[0] = js.joystickPosition(0);
-        jp[1] = js.joystickPosition(1);
+        sleep(1);
 
-
-        sleep(0.01);
-        for (int i = 0; i<5; i++){
-            joystick_buttons[i] = js.buttonPressed(i);
-        }
-        if (js.buttonPressed(0)){
+        if (js->buttonPressed(0)) {
             active = false;
         }
     }
 }
-void control_learn(joystick_position jp[2],bool joystick_buttons[5]) {
-    cout << "Initializing learning..."<< endl;
-    bool active = true;
 
-    while (active) {
-        //cout << "jp1: " << jp[0].x << " " << jp[0].y << " jp2: " << jp[1].x
-             //<< " " << jp[1].y << endl;
-        sleep(1);
-
-        if (joystick_buttons[0] == true) {active = false;}
-    }
-}
-
-void sdl_gfx(float car_loc, joystick_position jp[2], bool joystick_buttons[5]) {
-    cout << "Initializing visuals..."<< endl;
+void sdl_gfx(float* model_state, cJoystick* js) {
+    cout << "Initializing visuals..." << endl;
     sdl_gfx_screen screen;
     sleep(1);
-    //screen.sdl_quit();
     screen.objects_init();
     while (screen.sdl_status()) {
-        cout<<"car_loc_sdl"<<car_loc<<endl;
         screen.poll_event();
         screen.fill_screen();
-        screen.update_car_rt(car_loc);
+        screen.update_car_rt(model_state[1]);
         screen.objects_draw();
         screen.refresh_screen();
-        sleep(1);
-        if (joystick_buttons[0] == true) {screen.sdl_quit();}
+        usleep(30000);
+        if (js->buttonPressed(0)) {
+            screen.sdl_quit();
+        }
     }
 }
 
-void model_rt_loop(float * model_state, joystick_position jp[2], bool joystick_buttons[5]){
+void model_rt_loop(float* model_state, cmac_net * net, cJoystick* js) {
     float dt = 0.1;
 
     float** state_limits;
@@ -85,67 +100,61 @@ void model_rt_loop(float * model_state, joystick_position jp[2], bool joystick_b
     model m(2, state_limits, init_state, 1);
 
     bool active = true;
-    float * in = new float;
+    float in;
 
-    float * state_tmp = new float[2];
-    while (active){
-        *in = jp[0].x+1;
-        m.model_step(in);
-        state_tmp = m.get_state();
-        model_state[1] = state_tmp[1];
-        //cout<<jp[0].x<<" "<<in[0]<<" "<<model_state[1]<<endl;
-        //sleep(1);
-        if (joystick_buttons[0] == true) {active = false;}
-
+    float* state_tmp = new float[2];
+    joystick_position jp[2];
+    while (active) {
+        in = js->joystickPosition(0).x + 1;
+        m.model_step(&in);
+        m.get_state(model_state);
+        usleep(20000);
+        if (js->buttonPressed(1)) {
+            m.reset();
+        }
+        if (js->buttonPressed(0)) {
+            active = false;
+        }
     }
-    delete[] in;
+    for (int i = 0; i > 2; i++) delete[] state_limits[i];
+    delete[] state_limits;
     delete[] state_tmp;
-
 }
 
 int main(int argc, char* argv[]) {
-    cout << "Starting program..."<< endl;
+    cout << "Starting program..." << endl;
 
+    cJoystick js;
+    
+    float * tile_dimension = new float [3];
+
+    tile_dimension[0] = 0.14;
+    tile_dimension[1] = 1.7;
+    tile_dimension[2] = 1.7;
+
+    cmac_net net(3,tile_dimension,8,160000);
+
+
+
+    sleep(1);
 
     joystick_position jp[2];
-    for (int i = 0; i<2; i++){
-        jp[i].theta = 0;
-        jp[i].r = 0;
-        jp[i].x = 0;
-        jp[i].y = 0;
-    
-    }
 
-    bool joystick_buttons[5];
-    float  model_rt_state[2];
-    model_rt_state[0] = 0;
-    model_rt_state[1] = -0.5;
+    float* model_state = new float[2];
 
-    for (int i = 0; i<5; i++) joystick_buttons[i] = false;
-
-    thread learning_thread(control_learn, jp, joystick_buttons);
+    thread model_sim_thread(model_rt_loop, model_state, &net, &js);
     sleep(0.5);
-    thread model_sim_thread(model_rt_loop, model_rt_state, jp, joystick_buttons);
-    sleep(0.5);
-    thread sdl_thread(sdl_gfx, model_rt_state[1],jp, joystick_buttons);
-    sleep(0.5);
-    thread joystick_thread(joystick_listen, jp,joystick_buttons);
-    
+    thread sdl_thread(sdl_gfx, model_state, &js);
 
+    thread learning_thread(control_learn, model_state, &net, &js);
 
-
-
-    //int count = 0;
-    //while(++count < 5) {
-        //sleep(1);
-    //}
-    //joystick_buttons[0] = true;
 
     model_sim_thread.join();
-    joystick_thread.join();
     learning_thread.join();
 
     sdl_thread.join();
+    delete[] model_state;
+    delete[] tile_dimension;
 
     return 0;
 }

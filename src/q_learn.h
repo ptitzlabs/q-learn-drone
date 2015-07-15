@@ -21,6 +21,7 @@ class q_learn {
     bool goal_reached();
     bool goal_reached(int n);
     void run_episode();
+    void run_episode(float * init_state, float* goal_state);
     void run_step();
     void report();
     void write_contour(char* filename, int id, int n = 100, int m = 100);

@@ -3,6 +3,7 @@
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_gfxPrimitives.h>
+#include <SDL/SDL_ttf.h>
 #include <iostream>
 #include <stdlib.h>
 #include "RL_headers.h"
@@ -39,6 +40,7 @@ class sdl_gfx_screen {
         void object_move(line_object obj, float x_pos, float y_pos);
         void update_car_rt(float loc);
         void sdl_quit();
+        void draw_text();
 
         bool sdl_status();
         
@@ -46,9 +48,16 @@ class sdl_gfx_screen {
     private:
         SDL_Surface * _screen;
         SDL_Event _event;
+        TTF_Font* _font;
+        SDL_Surface* _text_surface;
         bool _sdl_running;
         char* _window_title;
         std::vector<line_object> _shapes;   
+        SDL_Color _foreground;
+        SDL_Color _background;
+        SDL_Rect _text_location;
+
+
 };
 
 #endif

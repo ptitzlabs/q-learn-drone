@@ -3,17 +3,39 @@
 sdl_gfx_screen::sdl_gfx_screen(int window_width, int window_height, char* title,
                                int alloc_objects) {
     SDL_Init(SDL_INIT_VIDEO);
+    TTF_Init();
     _screen = SDL_SetVideoMode(window_width, window_height, 0,
                                SDL_HWSURFACE | SDL_DOUBLEBUF);
 
     _window_title = title;
     SDL_WM_SetCaption(_window_title, 0);
+    _font = TTF_OpenFont("fonts/arial.ttf",12);
+    //sleep(1);
+    _foreground.r = 255;
+    _foreground.b = 255;
+    _foreground.g = 255;
+    
+    _background.r = 0;
+    _background.b = 0;
+    _background.g = 0;
+
+    _text_surface = TTF_RenderText_Shaded(_font, "Manual mode", _foreground, _background);
+
+    _text_location.x = 50;
+    _text_location.y = 50;
+    _text_location.w = 0;
+    _text_location.h = 0;
+
     _sdl_running = true;
     _shapes.reserve(alloc_objects);
 }
 void sdl_gfx_screen::sdl_quit() { _sdl_running = false; }
+
 sdl_gfx_screen::~sdl_gfx_screen() {
     SDL_FreeSurface(_screen);
+    //SDL_FreeSurface(_text_surface);
+    TTF_CloseFont(_font);
+    TTF_Quit();
     SDL_Quit();
     for (int i = 0; i < _shapes.size(); i++) {
         delete[] _shapes.at(i).x;
@@ -66,7 +88,7 @@ void sdl_gfx_screen::add_shape(int n, float* x, float* y, int* color,
     //<< " " << object.color[2] << " " << object.color[3] << std::endl;
 }
 void sdl_gfx_screen::update_car_rt(float loc) {
-    std::cout<<loc<<std::endl;
+    //std::cout<<loc<<std::endl;
     float car[5][2] = {{-0.05, -0.05},
                        {0.05, -0.05},
                        {0.05, 0.05},
@@ -76,8 +98,9 @@ void sdl_gfx_screen::update_car_rt(float loc) {
     //y = new float[5];
 
     for (int i = 0; i < 5; i++) {
+
         car[i][0] = car[i][0]+loc;
-        car[i][1] = car[i][1]+(1 + sin(3 * car[i][0])) / 2;
+        car[i][1] = car[i][1]+(1 + sin(3 * loc)) / 2;
     }
 
     for(int i = 0; i<5; i++){
@@ -156,8 +179,12 @@ void sdl_gfx_screen::objects_draw() {
     for (int i = 0; i < _shapes.size(); i++) {
         draw_shape(_shapes.at(i));
     }
+    draw_text();
 
-    // lineRGBA(_screen, 20, 10, 70, 90, 255, 0, 0, 255);
+}
+void sdl_gfx_screen::draw_text(){
+    SDL_BlitSurface(_text_surface, NULL, _screen, &_text_location);
+
 }
 void sdl_gfx_screen::draw_shape(line_object obj) {
     float x[obj.num_vertices];

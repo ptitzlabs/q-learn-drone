@@ -102,37 +102,48 @@ void q_learn::run_episode() {
         run_step();
     }
     printf("%i\n", step);
-    // print_arr_1d(2, _m->get_state());
-    // printf("\n");
+}
+void q_learn::run_episode(float * init_state, float * goal_state) {
+    _m->reset();
+    _m->set_state(init_state);
+    set_goal(goal_state);
+
+    _net->clear_traces();
+
+    float net_input[3] = {_m->get_state(0),_m->get_state(1),goal_state[1]};
+    _net->generate_tiles(net_input);
+
+    calc_q();
+
+    _action = find_max();
+
+    if (with_probability(_epsilon)) {
+        _action = rand() % _size_q;
+    }
+
+    int step = 0;
+
+    while (!goal_reached() && step < _max_steps) {
+        step++;
+        run_step();
+    }
+    printf("%i\n", step);
 }
 
 void q_learn::run_step() {
     _net->drop_traces();
     _net->update_traces(_action);
     _m->model_step(&_action_levels[_action]);
-    // print_arr_1d(2,_m->get_state());
-    // std::cout << std::endl;
     float reward = -1;
     float delta = reward - _q[_action];
     _net->generate_tiles(_m->get_state());
     calc_q();
-    // print_arr_1d(3, _q);
 
-    // std::cout <<"gamma:"<< std::endl;
     _action = find_max();
     int index_chk = 0;
-    //blabla(index_chk);
     gen_input_index_max_q(&index_chk, 0, _m->get_state(), 0, _net->get_tile_sub_dimension(),
                     _m->get_num_states(), 0, _n_action_levels , _net->get_weights(),
                     _net->get_memory_size(),_net->get_num_tilings()) ;
-    //std::cout<<"Action: "<<_action <<" action, no bs: "<<index_chk<<std::endl;
-    //gen_input_index(index_chk, num_inputs, state, goal, tile_sub_dimension,
-                    //num_states, input_levels, num_input_levels, weights,
-                    //num_weights, num_tilings) ;
-        // gen_input_index(index_chk, (int)1, _m->get_state, (float*)0,
-        //_net->get_tile_sub_dimension(), _m->get_num_states,
-        //_action_levels, _size_q,_net->get_weights(), _net->get_memory_size,
-        //_net->get_num_tilings());
         if (with_probability(_epsilon)) {
             _action = rand() % _size_q;
         }
@@ -165,14 +176,6 @@ void q_learn::run_step() {
 
         _m->report();
         _net->report();
-        // printf("Number of inputs:  %i\n", _num_inputs);
-        // printf("Tile dimension: ");
-        // for (int i = 0; i < _num_inputs; i++)
-        // printf("%i: (%f) ",i, _tile_dimension[i]);
-        // printf("\n");
-        // printf("Number of tilings:  %i\n", _num_tilings);
-        // printf("Memory size:       %i\n", _memory_size);
-        // printf("alpha:              %.2f\n", _alpha * _num_tilings);
     }
     void q_learn::write_contour(char* filename, int id, int n, int m) {
         char buffer[256];
