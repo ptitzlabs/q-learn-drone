@@ -28,6 +28,7 @@ class cmac_net {
 
     void read_weights(char* filename);
     void write_weights(char* filename);
+    int id;
     
 
    private:

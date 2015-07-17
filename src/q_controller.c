@@ -13,15 +13,26 @@ void gen_input_index_max_q(int *input_index, int num_inputs, float* state, float
                int num_input_levels, float* weights, int num_weights,
                int num_tilings) {
     float q[num_input_levels];
-    float variables[num_states];
+    float variables[num_states+1];
     int tiles[num_tilings];
 
+
+
+    /*variables[num_states] = 0.5;*/
+    variables[0] = state[0];
+    variables[1] = state[1];
+    variables[2] = 0.5;
     for (int i = 0; i < num_states; i++)
         variables[i] = state[i] / tile_sub_dimension[i];
+    
+variables[2] = 0.5/tile_sub_dimension[2];
+    
+
+//printf("%.2f %.2f %.2f\n",variables[0],variables[1],variables[2]);
 
     for (int i = 0; i < num_input_levels; i++) {
         q[i] = 0;
-        get_tiles1(tiles, num_tilings, variables, num_states, num_weights,
+        get_tiles1(tiles, num_tilings, variables, 3, num_weights,
                    i);
         for (int j = 0; j < num_tilings; j++) q[i] += weights[tiles[j]];
     }

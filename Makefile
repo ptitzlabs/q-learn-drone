@@ -1,5 +1,5 @@
-all: lib/joystick.o lib/glhelper.o lib/sdl_gfx_screen.o lib/qutils.o lib/model.o lib/cmac_net.o lib/tiles.o lib/q_learn.o
-	g++ main.cpp lib/joystick.o lib/glhelper.o lib/sdl_gfx_screen.o lib/qutils.o lib/model.o lib/cmac_net.o lib/tiles.o lib/q_learn.o -o bin/main -L/usr/lib `sdl-config --cflags --libs` -lSDL_ttf -lSDL_gfx -lSDL_image -lGL -lGLU -lpthread -std=c++11
+all: lib/joystick.o lib/glhelper.o lib/sdl_gfx_screen.o lib/qutils.o lib/model.o lib/cmac_net.o lib/tiles.o lib/q_learn.o lib/q_controller.o
+	g++ main.cpp lib/joystick.o lib/glhelper.o lib/sdl_gfx_screen.o lib/qutils.o lib/model.o lib/cmac_net.o lib/tiles.o lib/q_learn.o lib/q_controller.o -o bin/main -L/usr/lib `sdl-config --cflags --libs` -lSDL_ttf -lSDL_gfx -lSDL_image -lGL -lGLU -lpthread -std=c++11
 
 lib/sdl_gfx_screen.o: src/sdl_gfx_screen.h src/sdl_gfx_screen.cpp
 	g++ src/sdl_gfx_screen.cpp -c -o lib/sdl_gfx_screen.o -lSDL_gfx
@@ -23,6 +23,8 @@ lib/tiles.o: src/tiles.h src/tiles.c
 	g++ src/tiles.c -c -o lib/tiles.o
 lib/q_learn.o: src/q_learn.h src/q_learn.cpp
 	g++ src/q_learn.cpp -c -o lib/q_learn.o
+lib/q_controller.o: src/q_controller.h src/q_controller.c
+	g++ src/q_controller.c -c -o lib/q_controller.o
 
 clean:
 	@rm -f *~ src/*~ lib/* bin/*

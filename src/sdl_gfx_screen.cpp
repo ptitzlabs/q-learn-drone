@@ -104,8 +104,32 @@ void sdl_gfx_screen::update_car_rt(float loc) {
     }
 
     for(int i = 0; i<5; i++){
-        _shapes.back().x[i] = car[i][0];
-        _shapes.back().y[i] = car[i][1];
+        _shapes.at(1).x[i] = car[i][0];
+        _shapes.at(1).y[i] = car[i][1];
+    }
+
+
+}
+void sdl_gfx_screen::update_target_flag(float loc) {
+    //std::cout<<loc<<std::endl;
+    float flag[5][2] = {{0, 0},
+                       {0, 0.1},
+                       {0.05, 0.1},
+                       {0.05, 0.05},
+                       {0, 0.05}};
+    //x = new float[5];
+    //y = new float[5];
+    loc = (loc+1)/2-0.5;
+
+    for (int i = 0; i < 5; i++) {
+
+        flag[i][0] = flag[i][0]+loc;
+        flag[i][1] = flag[i][1]+(1 + sin(3 * loc)) / 2;
+    }
+
+    for(int i = 0; i<5; i++){
+        _shapes.at(2).x[i] = flag[i][0];
+        _shapes.at(2).y[i] = flag[i][1];
     }
 
 
@@ -151,6 +175,26 @@ void sdl_gfx_screen::objects_init() {
     for(int i = 0; i<5; i++){
         x[i] = car[i][0];
         y[i] = car[i][1];
+    }
+
+    color[0]=0;
+    color[1]=255;
+
+    add_shape(5, x, y, color);
+    _shapes.back().scale_x = 200;
+    _shapes.back().scale_y = -200;
+    _shapes.back().x_pos = 400;
+    _shapes.back().y_pos = 300;
+    float flag[5][2] = {{0, 0},
+                       {0, 0.1},
+                       {0.05, 0.1},
+                       {-0.05, 0.05},
+                       {0, 0.05}};
+    //x = new float[5];
+    //y = new float[5];
+    for(int i = 0; i<5; i++){
+        x[i] = flag[i][0];
+        y[i] = flag[i][1];
     }
 
     color[0]=0;

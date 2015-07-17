@@ -19,6 +19,7 @@ q_learn::q_learn(cmac_net* net, model* m, int n_action_levels,
     _action_levels = action_levels;
     calc_q();
     _action = find_max();
+    net->id = 999;
     //_myfile.open ("example.txt");
     //_myfile << "Writing this to a file.\n";
 }
@@ -103,14 +104,16 @@ void q_learn::run_episode() {
     }
     printf("%i\n", step);
 }
-void q_learn::run_episode(float * init_state, float * goal_state) {
+// Learning with target and init state as a factor
+void q_learn::run_episode(float* init_state, float* goal_state) {
+    float model_init_state[2] = {init_state[0],init_state[1]};
     _m->reset();
-    _m->set_state(init_state);
+    _m->set_state(model_init_state);
     set_goal(goal_state);
 
     _net->clear_traces();
 
-    float net_input[3] = {_m->get_state(0),_m->get_state(1),goal_state[1]};
+    float net_input[3] = {_m->get_state(0), _m->get_state(1), goal_state[1]};
     _net->generate_tiles(net_input);
 
     calc_q();
@@ -127,7 +130,39 @@ void q_learn::run_episode(float * init_state, float * goal_state) {
         step++;
         run_step();
     }
-    printf("%i\n", step);
+
+    ///////////////////////////////////////////////////////
+    //_m->reset();
+    //_m->set_state(init_state);
+    //set_goal(goal_state);
+
+    //_net->clear_traces();
+
+    //// float net_input[3] = {_m->get_state(0), _m->get_state(1), goal_state[1]};
+    //net_input[0] = 0;
+    //net_input[1] = -0.5;
+    //net_input[2] = 0.5;
+    //_net->generate_tiles(net_input);
+
+    //calc_q();
+
+    //_action = find_max();
+    //int tiles[10];
+    //float var_tmp[] = {0, -0.5, 0.5};
+    //get_tiles1(tiles, 10, var_tmp, 3, 160000, 0);
+    //float* weights = _net->get_weights();
+
+    //for (int i = 0; i < 10; i++) std::cout << weights[tiles[i]] << " ";
+    //int index_chk = 0;
+    //float m_chk[] = {0, -0.5};
+    //gen_input_index_max_q(&index_chk, 0, m_chk, 0,
+                          //_net->get_tile_sub_dimension(), _m->get_num_states(),
+                          //0, _n_action_levels, _net->get_weights(),
+                          //_net->get_memory_size(), _net->get_num_tilings());
+
+    //std::cout << " ::: " << index_chk << " " << _action;
+    ////////////////////////////////////////////////////////
+    //printf("%i\n", step);
 }
 
 void q_learn::run_step() {
@@ -136,84 +171,110 @@ void q_learn::run_step() {
     _m->model_step(&_action_levels[_action]);
     float reward = -1;
     float delta = reward - _q[_action];
-    _net->generate_tiles(_m->get_state());
+    float net_input[3] = {_m->get_state(0), _m->get_state(1), _curr_goal[1]};
+    _net->generate_tiles(net_input);
     calc_q();
 
     _action = find_max();
     int index_chk = 0;
-    gen_input_index_max_q(&index_chk, 0, _m->get_state(), 0, _net->get_tile_sub_dimension(),
-                    _m->get_num_states(), 0, _n_action_levels , _net->get_weights(),
-                    _net->get_memory_size(),_net->get_num_tilings()) ;
-        if (with_probability(_epsilon)) {
-            _action = rand() % _size_q;
+    // gen_input_index_max_q(&index_chk, 0, _m->get_state(), 0,
+    //_net->get_tile_sub_dimension(), _m->get_num_states(),
+    // 0, _n_action_levels, _net->get_weights(),
+    //_net->get_memory_size(), _net->get_num_tilings());
+
+    // std::cout<<"action check: "<<_action <<" " <<index_chk<<std::endl;
+    if (with_probability(_epsilon)) {
+        _action = rand() % _size_q;
+    }
+    if (!goal_reached()) delta += _gamma * _q[_action];
+    _net->quick_update(delta);
+    calc_q(_action);
+}
+// void q_learn::run_step() {
+//_net->drop_traces();
+//_net->update_traces(_action);
+//_m->model_step(&_action_levels[_action]);
+// float reward = -1;
+// float delta = reward - _q[_action];
+//_net->generate_tiles(_m->get_state());
+// calc_q();
+
+//_action = find_max();
+// int index_chk = 0;
+// gen_input_index_max_q(&index_chk, 0, _m->get_state(), 0,
+//_net->get_tile_sub_dimension(), _m->get_num_states(),
+// 0, _n_action_levels, _net->get_weights(),
+//_net->get_memory_size(), _net->get_num_tilings());
+// if (with_probability(_epsilon)) {
+//_action = rand() % _size_q;
+//}
+// if (!goal_reached()) delta += _gamma * _q[_action];
+//_net->quick_update(delta);
+// calc_q(_action);
+//}
+
+void q_learn::report() {
+    printf("\n##############\n");
+    printf("Q-learn report:\n");
+    std::cout << "Max steps: " << _max_steps << std::endl << "gamma: " << _gamma
+              << "\nepsilon: " << _epsilon
+              << "\nSize of Q (number of actions): " << _size_q
+              << "\nCurrent Q: ";
+    for (int i = 0; i < _size_q; i++) std::cout << _q[i] << "  ";
+
+    std::cout << "\nCurrent action:" << _action
+              << "\nNumber of action values: " << _n_action_levels
+              << "\nAction values:";
+    for (int i = 0; i < _n_action_levels; i++)
+        std::cout << _action_levels[i] << "  ";
+    std::cout << "\nNumber of goal states: " << _n_goal_states
+              << "\nGoal state inices: ";
+    for (int i = 0; i < _n_goal_states; i++)
+        std::cout << _goal_state_index[i] << "  ";
+    std::cout << "\nGoal states: ";
+    for (int i = 0; i < _n_goal_states; i++)
+        std::cout << _curr_goal[_goal_state_index[i]] << "  ";
+
+    _m->report();
+    _net->report();
+}
+void q_learn::write_contour(char* filename, int id, int n, int m) {
+    char buffer[256];
+    sprintf(buffer, "%s%i", filename, id);
+
+    float* xx = new float[n];
+    float* yy = new float[m];
+    float** zz = new float* [m];
+    for (int i = 0; i < m; i++) zz[i] = new float[n];
+
+    float** limits = _m->get_state_limits();
+
+    float x_step = (limits[0][1] - limits[0][0]) / float(n - 1);
+    float y_step = (limits[1][1] - limits[1][0]) / float(n - 1);
+    std::cout << "xstep: " << x_step << " ystep: " << y_step
+              << " limits: " << limits[0][0] << " " << limits[0][1] << "; "
+              << " " << limits[1][0] << " " << limits[1][1] << std::endl;
+
+    for (int i = 0; i < n; i++) {
+        xx[i] = limits[0][0] + x_step * (float)i;
+        std::cout << xx[i] << " ";
+    }
+    std::cout << std::endl;
+    for (int i = 0; i < m; i++) {
+        yy[i] = limits[1][0] + y_step * (float)i;
+        std::cout << yy[i] << " ";
+    }
+    float in_tmp[2];
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            in_tmp[0] = xx[i];
+            in_tmp[1] = yy[j];
+
+            _net->generate_tiles(in_tmp);
+            _net->return_value(&zz[j][i], id);
         }
-        if (!goal_reached()) delta += _gamma * _q[_action];
-        _net->quick_update(delta);
-        calc_q(_action);
     }
 
-    void q_learn::report() {
-        printf("\n##############\n");
-        printf("Q-learn report:\n");
-        std::cout << "Max steps: " << _max_steps << std::endl
-                  << "gamma: " << _gamma << "\nepsilon: " << _epsilon
-                  << "\nSize of Q (number of actions): " << _size_q
-                  << "\nCurrent Q: ";
-        for (int i = 0; i < _size_q; i++) std::cout << _q[i] << "  ";
-
-        std::cout << "\nCurrent action:" << _action
-                  << "\nNumber of action values: " << _n_action_levels
-                  << "\nAction values:";
-        for (int i = 0; i < _n_action_levels; i++)
-            std::cout << _action_levels[i] << "  ";
-        std::cout << "\nNumber of goal states: " << _n_goal_states
-                  << "\nGoal state inices: ";
-        for (int i = 0; i < _n_goal_states; i++)
-            std::cout << _goal_state_index[i] << "  ";
-        std::cout << "\nGoal states: ";
-        for (int i = 0; i < _n_goal_states; i++)
-            std::cout << _curr_goal[_goal_state_index[i]] << "  ";
-
-        _m->report();
-        _net->report();
-    }
-    void q_learn::write_contour(char* filename, int id, int n, int m) {
-        char buffer[256];
-        sprintf(buffer, "%s%i", filename, id);
-
-        float* xx = new float[n];
-        float* yy = new float[m];
-        float** zz = new float* [m];
-        for (int i = 0; i < m; i++) zz[i] = new float[n];
-
-        float** limits = _m->get_state_limits();
-
-        float x_step = (limits[0][1] - limits[0][0]) / float(n - 1);
-        float y_step = (limits[1][1] - limits[1][0]) / float(n - 1);
-        std::cout << "xstep: " << x_step << " ystep: " << y_step
-                  << " limits: " << limits[0][0] << " " << limits[0][1] << "; "
-                  << " " << limits[1][0] << " " << limits[1][1] << std::endl;
-
-        for (int i = 0; i < n; i++) {
-            xx[i] = limits[0][0] + x_step * (float)i;
-            std::cout << xx[i] << " ";
-        }
-        std::cout << std::endl;
-        for (int i = 0; i < m; i++) {
-            yy[i] = limits[1][0] + y_step * (float)i;
-            std::cout << yy[i] << " ";
-        }
-        float in_tmp[2];
-
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < m; j++) {
-                in_tmp[0] = xx[i];
-                in_tmp[1] = yy[j];
-
-                _net->generate_tiles(in_tmp);
-                _net->return_value(&zz[j][i], id);
-            }
-        }
-
-        save_arr_2d(m, n, yy, xx, zz, buffer);
-    }
+    save_arr_2d(m, n, yy, xx, zz, buffer);
+}

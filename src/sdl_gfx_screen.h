@@ -39,6 +39,7 @@ class sdl_gfx_screen {
         void object_scale(line_object obj, float scale_x, float scale_y);
         void object_move(line_object obj, float x_pos, float y_pos);
         void update_car_rt(float loc);
+        void update_target_flag(float loc);
         void sdl_quit();
         void draw_text();
 

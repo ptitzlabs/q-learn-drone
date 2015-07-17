@@ -20,6 +20,7 @@ cmac_net::cmac_net(int num_inputs, float* tile_dimension, int tile_resolution,
     _traces = new float[memory_size];
 
     _hashings = new int* [_num_hashings];
+    id = 888;
 
     for (int i = 0; i < _memory_size; i++) {
         _weights[i] = 0.0f;
@@ -91,6 +92,7 @@ void cmac_net::generate_tiles(float* input) {
         input_tmp[i] = input[i]/_tile_sub_dimension[i];
     }
     for (int i = 0; i < _num_hashings; i++){
+        //printf("%.2f %.2f %.2f\n",variables[0],variables[1],variables[2]);
 
         get_tiles1(_hashings[i], _num_tilings, input_tmp, _num_inputs, _memory_size,
                  i);
