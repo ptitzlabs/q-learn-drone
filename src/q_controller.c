@@ -21,11 +21,11 @@ void gen_input_index_max_q(int *input_index, int num_inputs, float* state, float
     /*variables[num_states] = 0.5;*/
     variables[0] = state[0];
     variables[1] = state[1];
-    variables[2] = 0.5;
+    variables[2] = goal[1];
     for (int i = 0; i < num_states; i++)
         variables[i] = state[i] / tile_sub_dimension[i];
     
-variables[2] = 0.5/tile_sub_dimension[2];
+variables[2] = goal[1]/tile_sub_dimension[2];
     
 
 //printf("%.2f %.2f %.2f\n",variables[0],variables[1],variables[2]);

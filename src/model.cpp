@@ -77,22 +77,26 @@ void model::report() {
 }
 
 float* model::get_state() { return _cur_state; }
-void model::get_state(float * state){
+void model::get_state(float* state) {
     for (int i = 0; i < _num_states; i++) state[i] = _cur_state[i];
-
 }
-int model::get_num_states(){
-    return _num_states;
-}
-float ** model::get_state_limits() {return _state_limits;}
+int model::get_num_states() { return _num_states; }
+float** model::get_state_limits() { return _state_limits; }
 float model::get_state(int n) { return _cur_state[n]; }
+float model::get_init_state(int n) { return _init_state[n]; }
 
-void model::set_state(float* state) { _cur_state = state; }
+void model::set_state(float* state) {
+    for (int i = 0; i < _num_states; i++) _cur_state[i] = state[i];
+}
+void model::set_init_state(float* state) {
+    for (int i = 0; i < _num_states; i++) _init_state[i] = state[i];
+}
 void model::set_state(int n, float state) { _cur_state[n] = state; }
 
 void model::reset() {
-    _cur_state[0] = 0;
-    _cur_state[1] = -0.5;
+    for (int i = 0; i< _num_states; i++) _cur_state[i] = _init_state[i];
+    //_cur_state[0] = 0;
+    //_cur_state[1] = -0.5;
 #ifdef TRAJECTORY_SAVE_ON
     _trajectory_file << _cur_state[0] << "," << _cur_state[1] << "\n";
 #endif

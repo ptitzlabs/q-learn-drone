@@ -62,14 +62,16 @@ void control_learn(float* model_state, cmac_net* net, cJoystick* js) {
     while (active) {
         // init_state[0] = model_state[0];
         // init_state[1] = model_state[1];
+        float goal_state_tmp = (js->joystickPosition(1).x+1)/2-0.5;
+        goal_state[1] = goal_state_tmp;
         q.run_episode(model_state, goal_state);
         int index_chk = 0;
         // float m_chk[] = {0, -0.5};
         float m_chk[] = {model_state[0], model_state[1]};
-        gen_input_index_max_q(
-            &index_chk, 0, m_chk, 0, net->get_tile_sub_dimension(), 2, 0, 3,
-            net->get_weights(), net->get_memory_size(), net->get_num_tilings());
-        cout << " " << index_chk << " ";
+        //gen_input_index_max_q(
+            //&index_chk, 0, m_chk, 0, net->get_tile_sub_dimension(), 2, 0, 3,
+            //net->get_weights(), net->get_memory_size(), net->get_num_tilings());
+        //cout << " " << index_chk << " ";
         if (tmp_flag == 0) tmp_flag = 1;
 
         // int tiles[10];
@@ -136,7 +138,9 @@ void model_rt_loop(float* model_state, cmac_net* net, cJoystick* js) {
 
     float* state_tmp = new float[2];
     joystick_position jp[2];
-    float goal[] = {0, 0.5};
+    float goal[2];
+    goal[1] = 0;
+
     while (active) {
         m.get_state(model_state);
 #ifdef AUTO_MODE
@@ -144,8 +148,11 @@ void model_rt_loop(float* model_state, cmac_net* net, cJoystick* js) {
         float kk;
         float m_chk[] = {model_state[0], model_state[1]};
 
+    float goal_state_tmp = (js->joystickPosition(1).x+1)/2-0.5;
+        goal[1] =  goal_state_tmp;
+        //goal[1] = 0.5;
         gen_input_index_max_q(
-            &index_chk, 0, m_chk, 0, net->get_tile_sub_dimension(), 2, 0, 3,
+            &index_chk, 0, m_chk, goal, net->get_tile_sub_dimension(), 2, 0, 3,
             net->get_weights(), net->get_memory_size(), net->get_num_tilings());
         kk = (float)index_chk;
         if (tmp_flag == 1) {
@@ -159,13 +166,13 @@ void model_rt_loop(float* model_state, cmac_net* net, cJoystick* js) {
 
         input_index=0;
         gen_input_index_max_q(
-            &input_index, 0, model_state, 0, net->get_tile_sub_dimension(), 2, 0, 3,
+            &input_index, 0, model_state, goal, net->get_tile_sub_dimension(), 2, 0, 3,
             net->get_weights(), net->get_memory_size(), net->get_num_tilings());
         //gen_input_index_max_q(&input_index, 0, m_chk, 0,
                               //net->get_tile_sub_dimension(), 2,
                               //0, 3, net->get_weights(), net->get_memory_size(),
                               //net->get_num_tilings());
-        cout << "input_index "<< input_index << " index_chk " << index_chk <<  " get_num_states() " << m.get_num_states() <<  endl;
+        //cout << "input_index "<< input_index << " index_chk " << index_chk <<  " get_num_states() " << m.get_num_states() <<  endl;
         // cout << net->get_weights()[100] << endl;
         //
 

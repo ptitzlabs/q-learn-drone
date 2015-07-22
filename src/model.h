@@ -17,10 +17,12 @@ class model{
     void report();
     float * get_state();
     float get_state(int n);
+    float get_init_state(int n);
     void get_state(float * state);
     float **get_state_limits();
     void set_state(int n, float state);
     void set_state(float *state);
+    void set_init_state(float *state);
     int get_num_states();
 
     void reset();

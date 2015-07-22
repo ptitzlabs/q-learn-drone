@@ -9,7 +9,7 @@ class q_learn {
    public:
     q_learn(cmac_net *net, model *m, int n_action_levels, float *action_levels,
             float *goal, int n_goal_states, int *goal_state_index,
-            float epsilon = 0.0, float gamma = 1.0, int max_steps = 10000);
+            float epsilon = 0.0, float gamma = 1.0, int max_steps = 10000, float max_overshoot = 0.01);
 
     ~q_learn();
 
@@ -25,6 +25,7 @@ class q_learn {
     void run_step();
     void report();
     void write_contour(char* filename, int id, int n = 100, int m = 100);
+    float calc_reward(float * goal, float* curr_state, int num_states = 2);
 
    private:
 
@@ -32,6 +33,7 @@ class q_learn {
     model *_m;
 
     int _max_steps;
+    float _max_overshoot;
     float _gamma;
     float _epsilon;
 
