@@ -1,6 +1,9 @@
 all: lib/joystick.o lib/glhelper.o lib/sdl_gfx_screen.o lib/qutils.o lib/model.o lib/cmac_net.o lib/tiles.o lib/q_learn.o lib/q_controller.o
 	g++ main.cpp lib/joystick.o lib/glhelper.o lib/sdl_gfx_screen.o lib/qutils.o lib/model.o lib/cmac_net.o lib/tiles.o lib/q_learn.o lib/q_controller.o -o bin/main -L/usr/lib `sdl-config --cflags --libs` -lSDL_ttf -lSDL_gfx -lSDL_image -lGL -lGLU -lpthread -std=c++11
 
+huge: lib/joystick.o lib/glhelper.o lib/sdl_gfx_screen.o lib/qutils.o lib/tiles.o lib/q_controller.o
+	g++ main_huge.cpp lib/joystick.o lib/glhelper.o lib/sdl_gfx_screen.o lib/qutils.o lib/tiles.o lib/q_controller.o -o bin/main -L/usr/lib `sdl-config --cflags --libs` -lSDL_ttf -lSDL_gfx -lSDL_image -lGL -lGLU -lpthread -std=c++11
+
 lib/sdl_gfx_screen.o: src/sdl_gfx_screen.h src/sdl_gfx_screen.cpp
 	g++ src/sdl_gfx_screen.cpp -c -o lib/sdl_gfx_screen.o -lSDL_gfx
 

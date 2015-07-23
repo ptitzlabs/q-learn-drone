@@ -1,5 +1,7 @@
 #include "qutils.h"
 
+namespace qutils {
+
 int find_max(float* arr, int numel) {
     float max_val = arr[0];
     int num_ties = 1;
@@ -21,6 +23,9 @@ int find_max(float* arr, int numel) {
 
     return index;
 }
+
+bool with_probability(float p) { return p > ((float)rand()) / RAND_MAX; }
+}
 void print_arr_1d(int n, float* arr) {
     std::cout << "[";
     for (int i = 0; i < n; i++) {
@@ -28,6 +33,12 @@ void print_arr_1d(int n, float* arr) {
         if (i < n - 1) std::cout << ", ";
     }
     std::cout << "]";
+}
+void print_arr_2d(int n, int m, float** arr) {
+    for (int i = 0; i< n; i++){
+        std::cout<<std::endl;
+        print_arr_1d(m,arr[i]);
+    }
 }
 
 void save_arr_1d(int n, float* arr, char* filename) {
