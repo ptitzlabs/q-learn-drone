@@ -41,6 +41,7 @@ struct q_params {
     float lambda;
     float epsilon;
     int max_steps;
+    float max_overshoot;
 };
 struct q_space {
     int memory_size;
@@ -50,6 +51,7 @@ struct q_space {
     float* weights;
     float* traces;
     float* sub_dimension;
+    float* reward_bandwidth;
 };
 class model {
    public:
@@ -75,7 +77,7 @@ void model::report() {
     print_arr_1d(2, curr_s[0]);
     cout << "\ninit state: ";
     print_arr_1d(2, init_s[0]);
-    cout<<endl;
+    cout << endl;
 }
 model::model() {
     m_parm.num_states = 2;
@@ -88,7 +90,7 @@ model::model() {
     m_parm.action_space[1] = 1;
     m_parm.action_space[2] = 2;
 
-    float state_limits[2][2] = {{-0.07, 0.07}, {-1.2, 0.6}};
+    float state_limits[2][2] = {{-0.07, 0.07}, {-1.2, 0.7}};
 
     m_parm.state_limits = new float* [2];
     for (int i = 0; i < 2; i++) m_parm.state_limits[i] = new float[2];
@@ -133,7 +135,11 @@ void model::advance(int in, int id) {
         curr_s[id][0] = m_parm.state_limits[0][1];
 
     curr_s[id][1] += curr_s[id][0];
-    cout << curr_s[id][0] << " " << curr_s[id][1] << endl;
+    if (curr_s[id][1] < m_parm.state_limits[1][0])
+        curr_s[id][1] = m_parm.state_limits[1][0];
+    if (curr_s[id][1] > m_parm.state_limits[1][1])
+        curr_s[id][1] = m_parm.state_limits[1][1];
+    // cout << curr_s[id][0] << " " << curr_s[id][1] << endl;
 }
 
 class q_learn_instance {
@@ -148,6 +154,8 @@ class q_learn_instance {
     void gen_tiles();
     void calc_q();
     void calc_q(int hash);
+    float calc_reward();
+    void calc_reward_parm();
 
     void clear_traces();
     void drop_traces();
@@ -181,7 +189,7 @@ void q_learn_instance::report() {
     print_arr_1d(2, _goal_state);
     cout << "\ninit state: ";
     print_arr_1d(2, _init_state);
-    cout<<endl;
+    cout << endl;
 }
 q_learn_instance::q_learn_instance(model* m) {
     _m = m;
@@ -190,6 +198,7 @@ q_learn_instance::q_learn_instance(model* m) {
     q_parm.lambda = 0.9;
     q_parm.epsilon = 0.0;
     q_parm.max_steps = 10000;
+    q_parm.max_overshoot = 0.03;
 
     _q.memory_size = 160000;
     _q.num_tilings = 10;
@@ -198,6 +207,12 @@ q_learn_instance::q_learn_instance(model* m) {
     _q_val = new float[_m->m_parm.num_actions];
     _q.weights = new float[_q.memory_size];
     _q.traces = new float[_q.memory_size];
+
+    _q.reward_bandwidth = new float[2];
+    _q.reward_bandwidth[0] =
+        (_m->m_parm.state_limits[0][1] - _m->m_parm.state_limits[0][0]) / 2;
+    _q.reward_bandwidth[1] =
+        fabs(_m->curr_s[0][1] - _m->init_s[0][1]) * q_parm.max_overshoot;
 
     q_parm.alpha = 0.5 / _q.num_tilings;
     for (int i = 0; i < _q.memory_size; i++) {
@@ -235,6 +250,8 @@ void q_learn_instance::set_net_input() {
     _net_input[0] = _m->curr_s[0][0] / _q.sub_dimension[0];
     _net_input[1] = _m->curr_s[0][1] / _q.sub_dimension[1];
     _net_input[2] = _goal_state[1] / _q.sub_dimension[1];
+    // cout<<"net input: "<<_net_input[0]<<" "<<_net_input[1]<<"
+    // "<<_net_input[2]<<endl;
 }
 
 void q_learn_instance::calc_q(int hash) {
@@ -270,6 +287,23 @@ void q_learn_instance::update_traces(int hash) {
     for (int i = 0; i < _q.num_tilings; i++)
         _q.traces[_features[hash][i]] = 1.0f;
 }
+float q_learn_instance::calc_reward() {
+    float state_norm[2];
+    float r = 0;
+    for (int i = 0; i < 2; i++) {
+        state_norm[i] =
+            (_m->curr_s[0][i] - _goal_state[i]) / _q.reward_bandwidth[i];
+        r += state_norm[i] * state_norm[i];
+    }
+    return -1 + 2*exp(-2 * r);
+}
+
+void q_learn_instance::calc_reward_parm() {
+    _q.reward_bandwidth[0] =
+        (_m->m_parm.state_limits[0][1] - _m->m_parm.state_limits[0][0]) / 2;
+    _q.reward_bandwidth[1] =
+        fabs(_m->curr_s[0][1] - _m->init_s[0][1]) * q_parm.max_overshoot;
+}
 void q_learn_instance::run_episode() {
     int action = 0;
     _m->init_set(_init_state, 0);
@@ -282,8 +316,11 @@ void q_learn_instance::run_episode() {
     int step = 0;
     float reward = -1;
     float delta = 0;
+    float cum_reward = 0;
 
-    while (step < q_parm.max_steps && _m->curr_s[0][1] < 0.5) {
+    int drop_flag = 0;
+
+    while (step < q_parm.max_steps && drop_flag != 2) {
         drop_traces();
         update_traces(action);
         delta = -_q_val[action];
@@ -292,27 +329,39 @@ void q_learn_instance::run_episode() {
         gen_tiles();
         calc_q();
         action = qutils::find_max(_q_val, _m->m_parm.num_actions);
-        action = 0;
-        print_arr_1d(3, _q_val);
-        cout << " " << action << endl;
-        sleep(1);
+        // action = 0;
+        // print_arr_1d(3, _q_val);
+        // cout << " " << action << endl;
+        // sleep(1);
         if (qutils::with_probability(q_parm.epsilon)) {
             action = rand() % _m->m_parm.num_actions;
         }
 
-        delta += reward;
+        delta += calc_reward();
         delta += q_parm.gamma * _q_val[action];
         delta *= q_parm.alpha;
+        // cout<<endl<<"update: "<<delta<<endl;
         for (int i = 0; i < _q.memory_size; i++) {
             _q.weights[i] += delta * _q.traces[i];
         }
         calc_q(action);
+
+        if (calc_reward() > -1) {
+            //cum_reward += calc_reward();
+            drop_flag =1;
+            cout << "current state: " << _m->curr_s[0][0] << " "
+                 << _m->curr_s[0][1] << " reward: " << calc_reward() << endl;
+        }
+
+        if (drop_flag == 1 && calc_reward() < -0.99999999)
+            drop_flag = 2;
         step++;
     }
     cout << step << endl;
 }
 
 void q_learn_instance::gen_tiles() {
+    set_net_input();
     for (int i = 0; i < _m->m_parm.num_actions; i++) {
         get_tiles1(_features[i], _q.num_tilings, _net_input, _q.num_vars,
                    _q.memory_size, i);
@@ -320,9 +369,10 @@ void q_learn_instance::gen_tiles() {
 }
 
 void q_learn_instance::train(float* init_state, float* goal_state) {
-    report();
     set_goal(goal_state);
     set_init(init_state);
+    calc_reward_parm();
+    report();
     set_net_input();
     gen_tiles();
     run_episode();
@@ -334,8 +384,8 @@ int main() {
     float init_state[] = {0, -0.5};
     float goal_state[] = {0, 0.5};
 
-    //q.report();
-    for (int i = 0; i < 5; i++) q.train(init_state, goal_state);
+    // q.report();
+    for (int i = 0; i < 500; i++) q.train(init_state, goal_state);
     return 0;
 }
 // struct q_space {
