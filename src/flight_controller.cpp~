@@ -1,0 +1,9 @@
+#include "flight_controller.hpp"
+
+rate_controller::rate_controller(drone_dynamics* drone, int input_id,
+                                 int state_id, double* tile_dimensions,
+                                 double** state_limits) {
+    _drone = drone;
+    _input_id = input_id;
+    _state_id = state_id;
+}
