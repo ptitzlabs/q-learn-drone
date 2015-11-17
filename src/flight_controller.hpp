@@ -17,6 +17,8 @@ struct control_parms {
 
     // CMAC parameters
     cmac_net net;
+    int n_input_parms;       // number of parameters supplied to CMAC
+    int *input_parm_id;      // ids of input parameters
     int memory_size;         // memory size to store the cmac
     int tile_resolution;     // tile resolution
     int num_tilings;         // number of overlapping tilings
