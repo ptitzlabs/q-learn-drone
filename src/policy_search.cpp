@@ -1,389 +1,226 @@
 #include "policy_search.hpp"
 
-control_policy::control_policy(){};
-void control_policy::parm_init(
-    cmac_net* net,          // network to store the policy
-    drone_dynamics* drone,  // model instance to be used for policy search
-    int control_input_id,
-    double* action_levels,  // control levels values
-    int n_action_levels,    // number of discrete control levels
-    int* input_parm_id,     // ids of states supplied to the policy
-    int n_input_parms,      // number of states supplied to the policy
-    int* goal_state_id,     // goal state ids
-    int n_goal_states,      // number of goal states
-    double model_stepsize, double epsilon, double gamma, int max_steps,
-    double max_overshoot) {
-    _net = net;
-    _drone = drone;
-    _model_stepsize = model_stepsize, _control_input_id = control_input_id;
-    _action_levels = action_levels;
-    _n_action_levels = n_action_levels;
-    _input_parm_id = input_parm_id;
-    _n_input_parms = n_input_parms;
-    _drone->get_state(&*_input_parms, &*_input_parm_id, n_input_parms);
-
-    _epsilon = epsilon;
-    _gamma = gamma;
-    _max_steps = max_steps;
-    _size_q = _net->get_num_hashings();
-    _goal_state_id = goal_state_id;
-    _n_goal_states = n_goal_states;
-    _q = new double[_size_q];
-    _max_overshoot = max_overshoot;
-    for (int i = 0; i < _size_q; i++) _q[i] = 0.0f;
-    calc_q();
-    _action = find_max();
-    net->id = 999;
-    //_myfile.open ("example.txt");
-    //_myfile << "Writing this to a file.\n";
+policy_parm::policy_parm()
+    : max_steps(10000),     // maximum number of steps
+      memory_size(3000),    // cmac memory size
+      n_tilings(10),        // number of tilings
+      tile_resolution(8),   // sub-tilings per tile
+      alpha(0.5),           // cmac learning update parameter
+      gamma(1),             // discount-rate parameter
+      lambda(0.9),          // trace-decay parameter
+      id_state(0),          // null-pointer
+      id_goal(0),           // null-pointer
+      goal_thres(0.1),      // goal threshold
+      epsilon(0),           // random action probability
+      n_action_levels(5) {  // number of action levels
+    action_levels = new double[n_action_levels];
+    for (int i = 0; i < 5; i++) action_levels[i] = -1 + i * 0.5;
+}
+policy_parm::~policy_parm() {
+    delete[] action_levels;
+    delete[] id_state;
+    delete[] id_goal;
 }
 
-void control_policy::calc_q() {
-    for (int i = 0; i < _size_q; i++) {
-        _net->return_value(&_q[i], i);
-    }
+void policy_parm::set_n_goal(int n) {
+    n_goal = n;
+    id_goal = new int[n];
 }
-int control_policy::find_max() {
-    // std::cout<<"Finding max:\n";
-    int max_index = 0;
-    double max_val = _q[0];
-    int num_ties = 1;
-    for (int i = 1; i < _size_q; i++) {
-        // std::cout<<"loop i\n";
-        if (_q[i] >= max_val) {
-            // std::cout<<"cond 1\n";
-            if (_q[i] > max_val) {
-                // std::cout<<"cond 2\n";
-                max_val = _q[i];
-                max_index = i;
-            } else {
-                // std::cout<<"cond else\n";
-                num_ties++;
-                if (rand() % num_ties == 0) {
-                    // std::cout<<"cond 3\n";
-                    max_val = _q[i];
-                    max_index = i;
-                }
-            }
-        }
-    }
-    return max_index;
+void policy_parm::set_n_state(int n) {
+    n_state = n;
+    id_state = new int[n];
 }
-control_policy::~control_policy() {
+
+policy::policy()
+    : m(0),  // NULL pointer for model
+      p(0),  // NULL pointer for policy parameters
+      n(0)   // NULL pointer for CMAC
+{}
+
+policy::~policy() {
+    delete m;  // clear up the model
+    delete n;  // clear up the cmac
     delete[] _q;
-    _q = NULL;
-    // delete[] _action_levels;
-    //_action_levels = NULL;
+    delete[] _cmac_input;
 }
 
-void control_policy::set_goal(double* goal) { _curr_goal = goal; }
-void control_policy::run_episode() {
-    _drone->reset();
-    _net->clear_traces();
-    _drone->get_state(&*_input_parms, &*_input_parm_id, _n_input_parms);
-    _net->generate_tiles(_input_parms);
+void policy::set_parm(policy_parm* policy_parm) {
+    std::cout<<BOLDYELLOW<<"SETTING POLICY PARAMETERS "<<RESET<<std::endl;
+    p = &*policy_parm;
+    // Initializing a CMAC net to store the policy
+    // CMAC tile dimensions to accomodate monitored states
+    p->n_cmac_parms =
+        p->n_state + p->n_goal;  // add up the monitored states and goals
+    double tile_dimension[p->n_cmac_parms];  // init tile dimensions
 
-    calc_q();
-
-    _action = find_max();
-
-    if (with_probability(_epsilon)) {
-        _action = rand() % _size_q;
+    //for (int i = 0; i < 19; i++) {
+        //std::cout << "state: " << i << " " << m->get_scale(i) << "\n";
+    //}
+    for (int i = 0; i < p->n_state; i++) {
+        tile_dimension[i] =
+            m->get_scale(p->id_state[i]);  // fill up the state dimensions
+        //std::cout << tile_dimension[i];
     }
 
-    int step = 0;
-
-    while (!goal_reached() && step < _max_steps) {
-        step++;
-        run_step();
+    for (int i = 0; i < p->n_goal; i++) {
+        tile_dimension[p->n_state + i] =
+            m->get_scale(p->id_goal[i]);  // fill up the goal dimensions
     }
-    printf("%i\n", step);
+
+    // Creating a new cmac instance and initializing the parameters
+    n = new cmac_net;
+    n->parm_init(
+        p->n_cmac_parms,     // both state and goal are used as inputs
+        tile_dimension,      // tile dimensions are the expected spread of
+                             // values
+        p->tile_resolution,  // tile resolution is the number of partitions
+        p->memory_size,      // allocated memory size
+        p->n_tilings,        // number of overlapping tiles
+        p->n_action_levels,  // number of action levels
+        p->alpha,            // update rate parameter alpha
+        p->gamma,            // trace decay parameter gamma
+        p->lambda);          // discount-rate parameter
+    n->report();
+
+    // Init cache variables
+    _q = new double[p->n_action_levels];
+    _cmac_input = new double[p->n_cmac_parms];
 }
-bool control_policy::with_probability(double p) {
-    return p > ((double)rand()) / RAND_MAX;
+void policy::set_model(drone_parm* sim_parm) {
+    std::cout<<BOLDYELLOW<<"SETTING MODEL"<<RESET<<std::endl;
+    m = new drone_dynamics(*sim_parm);
+    //m->set_input(0,1);
+    //m->rk4_step();
+    //m->report();
 }
-void control_policy::run_step() {
-    _net->drop_traces();
-    _net->update_traces(_action);
-
-    _drone->input_set(_action_levels[_control_input_id], _control_input_id);
-
-    //_m->model_step(&_action_levels[_action]);
-    _drone->rk4_step(_model_stepsize);
-    double reward;
-    _drone->get_state(_input_parms, _input_parm_id, _n_input_parms);
-    _drone->get_state(_goal_parms, _goal_state_id, _n_goal_states);
-    double delta = calc_reward() - _q[_action];
-    double net_input[_n_input_parms];
-    for (int i = 0; i < _n_input_parms; i++) net_input[i] = _input_parms[i];
-    _net->generate_tiles(net_input);
-    calc_q();
-
-    _action = find_max();
-    if (with_probability(_epsilon)) {
-        _action = rand() % _size_q;
+void policy::set_goal(double* goal) { _curr_goal = goal; }
+void policy::set_init(double* init) {
+    for (int i = 0; i < p->n_state; i++) {
+        m->set_init_parm(p->id_state[i], init[i]);
     }
-    delta += _gamma * _q[_action];
-    _net->quick_update(delta);
-    calc_q(_action);
+    m->reset();
 }
 
-double control_policy::goal_dist() {
-    double dist = 0;
-    for (int i = 0; i < _n_goal_states; i++)
-        dist += pow((_goal_parms[i] - _curr_goal[i]) /
-                        _drone->get_scale(_goal_state_id[i]),
-                    2);
-    return dist;
+void policy::set_state_parm(int id[], int n) {
+    p->id_state = new int[n];
+    p->n_state = n;
+    for (int i = 0; i++; i < n) p->id_state[i] = id[i];
 }
-bool control_policy::goal_reached() {
-    if (goal_dist() < 0.1)
-        return true;
-    else
-        return false;
-}
-void control_policy::calc_q(int hash) { _net->return_value(&_q[hash], hash); }
-double control_policy::calc_reward() {
-    return -goal_dist();
+void policy::set_goal_parm(int id[], int n) {
+    p->id_goal = new int[n];
+    p->n_goal = n;
+    for (int i = 0; i++; i < n) p->id_goal[i] = id[i];
 }
 
-#ifdef POLICY_SEARCH_ON
+bool policy::with_probability(double p) {
+    return p > ((float)rand()) / RAND_MAX;
+}
 
-int control_policy::find_max() {
-    // std::cout<<"Finding max:\n";
-    int max_index = 0;
-    double max_val = _q[0];
-    int num_ties = 1;
-    for (int i = 1; i < _size_q; i++) {
-        // std::cout<<"loop i\n";
-        if (_q[i] >= max_val) {
-            // std::cout<<"cond 1\n";
-            if (_q[i] > max_val) {
-                // std::cout<<"cond 2\n";
-                max_val = _q[i];
-                max_index = i;
-            } else {
-                // std::cout<<"cond else\n";
-                num_ties++;
-                if (rand() % num_ties == 0) {
-                    // std::cout<<"cond 3\n";
-                    max_val = _q[i];
-                    max_index = i;
-                }
-            }
-        }
+bool policy::goal_reached() {
+    double goal_dist = 0;  // normalized goal distance
+    int id;
+    std::cout<<"n_goal: "<<p->n_goal<<std::endl;
+    for (int i = 0; i < p->n_goal; i++) {
+        id = p->id_state[i];  // pick up the state id
+        //std::cout<<"goal "<<id<<": ";
+        //goal_dist = (m->get_state(id) - _curr_goal[i]) / m->get_scale(id);
+        //std::cout<<pow((m->get_state(id) - _curr_goal[i]) / m->get_scale(id),2)<<std::endl;
+        std::cout<<goal_dist;
     }
-    return max_index;
-}
-
-#define GOAL_TESTING
-bool control_policy::goal_reached() {
-    //#ifdef GOAL_TESTING
-    if (_m->get_init_state(1) < _curr_goal[1]) {
-        if (_m->get_state(1) > _curr_goal[1]) {
-            std::cout << "positive_goal" << std::endl;
-            return true;
-        }
-
-    } else {
-        if (_m->get_state(1) < _curr_goal[1]) {
-            std::cout << "negative_goal" << std::endl;
-            return true;
-        }
-    }
+    //return sqrt(goal_dist) < p->goal_thres;  // check with the goal threshold
     return false;
 }
-bool control_policy::goal_reached(int n) {
-    if (_m->get_state(n) > _curr_goal[n])
-        return true;
-    else
-        return false;
+
+void policy::calc_q() {
+    for (int i = 0; i < p->n_action_levels; i++) {
+        n->return_value(&_q[i], i);
+    }
 }
-
-void control_policy::set_goal(double* goal) { _curr_goal = goal; }
-
-// Learning with target and init state as a factor
-void control_policy::run_episode(double* init_state, double* goal_state) {
-    double model_init_state[2] = {init_state[0], init_state[1]};
-    model_init_state[0] = -0.07 + 0.14 * (double)(rand() % 10) / 10;
-    model_init_state[1] = -1.2 + 1.8 * (double)(rand() % 10) / 10;
-
-    //_m->set_state(model_init_state);
-    // std::cout << "cur_goal: " << goal_state[1] << " input_init_state "
-    //<< init_state[1] << " model_init_state: " << _m->get_state(1);
-    // model_init_state[0] = 0;
-    // model_init_state[1] = -0.5;
-    model_init_state[0] = init_state[0];
-    model_init_state[1] = init_state[1];
-    // goal_state[1] = 0.5;
-    set_goal(goal_state);
-    _m->set_init_state(model_init_state);
-    _m->reset();
-
-    _net->clear_traces();
-
-    double net_input[3] = {_m->get_state(0), _m->get_state(1), goal_state[1]};
-    _net->generate_tiles(net_input);
-
-    calc_q();
-
-    _action = find_max();
-
-    if (with_probability(_epsilon)) {
-        _action = rand() % _size_q;
-    }
-
-    int step = 0;
-
-    int counter = 0;
-
-    // while (!goal_reached() && step < _max_steps) {
-    while (counter < 100 && step < _max_steps) {
-        if (calc_reward(goal_state, _m->get_state(), 2) > -0.2) counter++;
-        step++;
-        run_step();
-    }
-    std::cout << "steps: " << step << " goal reached: " << goal_reached()
-              << std::endl;
-
-    // std::cout << " state 0 " << _m->get_state(0) << std::endl << "step " <<
-    // step
-    //<< std::endl;
-    ///////////////////////////////////////////////////////
-    //_m->reset();
-    //_m->set_state(init_state);
-    // set_goal(goal_state);
-
-    //_net->clear_traces();
-
-    //// double net_input[3] = {_m->get_state(0), _m->get_state(1),
-    /// goal_state[1]};
-    // net_input[0] = 0;
-    // net_input[1] = -0.5;
-    // net_input[2] = 0.5;
-    //_net->generate_tiles(net_input);
-
-    // calc_q();
-
-    //_action = find_max();
-    // int tiles[10];
-    // double var_tmp[] = {0, -0.5, 0.5};
-    // get_tiles1(tiles, 10, var_tmp, 3, 160000, 0);
-    // double* weights = _net->get_weights();
-
-    // for (int i = 0; i < 10; i++) std::cout << weights[tiles[i]] << " ";
-    // int index_chk = 0;
-    // double m_chk[] = {0, -0.5};
-    // gen_input_index_max_q(&index_chk, 0, m_chk, 0,
-    //_net->get_tile_sub_dimension(), _m->get_num_states(),
-    // 0, _n_action_levels, _net->get_weights(),
-    //_net->get_memory_size(), _net->get_num_tilings());
-
-    // std::cout << " ::: " << index_chk << " " << _action;
-    ////////////////////////////////////////////////////////
-    // printf("%i\n", step);
-}
-
-double control_policy::calc_reward(double* goal, double* curr_state,
-                                   int num_states) {
-    // Using Gaussian function to calculate potential-based reward
-    double sum = 0;
-
-    for (int i = 0; i < num_states; i++) {
-        sum += pow(
-            (goal[i] - curr_state[i]) / _net->get_tile_sub_dimension()[i], 2);
-    }
-
-    return -1 + exp(-sum);
-}
-
-// void control_policy::run_step() {
-//_net->drop_traces();
-//_net->update_traces(_action);
-//_m->model_step(&_action_levels[_action]);
-// double reward = -1;
-// double delta = reward - _q[_action];
-//_net->generate_tiles(_m->get_state());
-// calc_q();
-
-//_action = find_max();
-// int index_chk = 0;
-// gen_input_index_max_q(&index_chk, 0, _m->get_state(), 0,
-//_net->get_tile_sub_dimension(), _m->get_num_states(),
-// 0, _n_action_levels, _net->get_weights(),
-//_net->get_memory_size(), _net->get_num_tilings());
-// if (with_probability(_epsilon)) {
-//_action = rand() % _size_q;
-//}
-// if (!goal_reached()) delta += _gamma * _q[_action];
-//_net->quick_update(delta);
-// calc_q(_action);
-//}
-
-void control_policy::report() {
-    printf("\n##############\n");
-    printf("Q-learn report:\n");
-    std::cout << "Max steps: " << _max_steps << std::endl << "gamma: " << _gamma
-              << "\nepsilon: " << _epsilon
-              << "\nSize of Q (number of actions): " << _size_q
-              << "\nCurrent Q: ";
-    for (int i = 0; i < _size_q; i++) std::cout << _q[i] << "  ";
-
-    std::cout << "\nCurrent action:" << _action
-              << "\nNumber of action values: " << _n_action_levels
-              << "\nAction values:";
-    for (int i = 0; i < _n_action_levels; i++)
-        std::cout << _action_levels[i] << "  ";
-    std::cout << "\nNumber of goal states: " << _n_goal_states
-              << "\nGoal state inices: ";
-    for (int i = 0; i < _n_goal_states; i++)
-        std::cout << _goal_state_index[i] << "  ";
-    std::cout << "\nGoal states: ";
-    for (int i = 0; i < _n_goal_states; i++)
-        std::cout << _curr_goal[_goal_state_index[i]] << "  ";
-
-    _m->report();
-    _net->report();
-}
-void control_policy::write_contour(char* filename, int id, int n, int m) {
-    char buffer[256];
-    sprintf(buffer, "%s%i", filename, id);
-
-    double* xx = new double[n];
-    double* yy = new double[m];
-    double** zz = new double* [m];
-    for (int i = 0; i < m; i++) zz[i] = new double[n];
-
-    double** limits = _m->get_state_limits();
-
-    double x_step = (limits[0][1] - limits[0][0]) / double(n - 1);
-    double y_step = (limits[1][1] - limits[1][0]) / double(n - 1);
-    std::cout << "xstep: " << x_step << " ystep: " << y_step
-              << " limits: " << limits[0][0] << " " << limits[0][1] << "; "
-              << " " << limits[1][0] << " " << limits[1][1] << std::endl;
-
-    for (int i = 0; i < n; i++) {
-        xx[i] = limits[0][0] + x_step * (double)i;
-        std::cout << xx[i] << " ";
-    }
-    std::cout << std::endl;
-    for (int i = 0; i < m; i++) {
-        yy[i] = limits[1][0] + y_step * (double)i;
-        std::cout << yy[i] << " ";
-    }
-    double in_tmp[2];
-
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < m; j++) {
-            in_tmp[0] = xx[i];
-            in_tmp[1] = yy[j];
-
-            _net->generate_tiles(in_tmp);
-            _net->return_value(&zz[j][i], id);
+void policy::calc_q(int hash) { n->return_value(&_q[hash], hash); }
+int policy::calc_action() {
+    int index = 0;
+    float max_val = _q[0];
+    int num_ties = 1;
+    for (int i = 1; i < p->n_action_levels; i++) {
+        if (_q[i] >= max_val) {
+            if (_q[i] > max_val) {  // find max Q for current action
+                max_val = _q[i];
+                index = i;
+            } else {
+                num_ties++;
+                if (rand() % num_ties == 0) {  // randomly break ties
+                    max_val = _q[i];
+                    index = i;
+                }
+            }
         }
     }
-
-    save_arr_2d(m, n, yy, xx, zz, buffer);
+    if (with_probability(p->epsilon)) {  // or take a random guess
+        index = rand() % p->n_action_levels;
+    }
+    return index;
 }
 
-#endif
+void policy::calc_cmac_input() {
+    // Supply current state as CMAC input
+    for (int i = 0; i < p->n_state; i++) {
+        _cmac_input[i] = m->get_state(p->id_state[i]);
+    }
+    // Supply goal state as CMAC input
+    for (int i = 0; i < p->n_goal; i++) {
+        _cmac_input[p->n_state + i] = _curr_goal[i];
+    }
+}
+
+void policy::run_episode() {
+    m->reset();                      // reset model
+    n->clear_traces();               // clear traces
+    calc_cmac_input();               // update CMAC input
+    n->generate_tiles(_cmac_input);  // generate tiles
+    calc_q();                        // calculate Q-values
+    _action = calc_action();         // find optimal action
+
+    int step = 0;  // initial step number
+    while (!goal_reached() && step < p->max_steps) {
+        //m->rk4_step();
+        m->report();
+
+        //m->set_input(0,0);
+        m->rk4_step();
+        //run_step();
+        //m->report();
+        step++;
+    }
+
+    std::cout<<step<<std::endl;
+}
+
+void policy::run_step() {
+    n->drop_traces();           // drop traces
+    n->update_traces(_action);  // update traces for the current action
+    std::cout<< "\nACTION: "<<_action<<" INPUT: "<< p->action_levels[_action];
+    m->set_input(
+        p->id_input,                 // specify model input
+        p->action_levels[_action]);  // set model input to current action
+    m->rk4_step();                   // execute model step
+
+    double reward = -1;                   // calculate new reward
+    double delta = reward - _q[_action];  // substract old Q(k) value
+    calc_cmac_input();  // update CMAC input with the new model state
+    n->generate_tiles(_cmac_input);  // generate new CMAC tiles
+    calc_q();                        // calculate new Q(k+1) values
+    _action = calc_action();         // calculate the action for the next step
+    if (!goal_reached()) {
+        delta += p->gamma * _q[_action];  // calc the change in Q(k+1)
+    }
+    n->quick_update(delta);  // update Q(k+1) in the CMAC
+    calc_q(_action);         // calculate updated Q(k+1)
+}
+
+void policy::report() {
+    std::cout << "\n=====================" << std::endl;
+    std::cout << "CONTROLLER PARAMETERS" << std::endl;
+    std::cout << "=====================" << std::endl;
+    m->report();
+    n->report();
+}

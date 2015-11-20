@@ -33,7 +33,6 @@ void cmac_net::parm_init(int num_inputs, double* tile_dimension,
     _traces = new double[memory_size];             // initialize traces
 
     _hashings = new int* [_num_hashings];  // initialize hashings
-    id = 888;
 
     for (int i = 0; i < _memory_size; i++) {
         _weights[i] = 0.0f;
@@ -101,17 +100,12 @@ void cmac_net::generate_tiles(double* input) {
         input_tmp[i] = input[i] / _tile_sub_dimension[i];
     }
     for (int i = 0; i < _num_hashings; i++) {
-        // printf("%.2f %.2f %.2f\n",variables[0],variables[1],variables[2]);
-
         get_tiles1(_hashings[i], _num_tilings, input_tmp, _num_inputs,
                    _memory_size, i);
     }
 }
 
 void cmac_net::return_value(double* output, int hash) {
-    // int tiles_array[_num_tilings];
-    // GetTiles(tiles_array, _num_tilings, input, _num_inputs, _memory_size,
-    // hash);
     *output = 0;
     for (int i = 0; i < _num_tilings; i++)
         *output += _weights[_hashings[hash][i]];
@@ -120,10 +114,7 @@ void cmac_net::quick_update(double delta) {
     double tmp = _alpha * delta;
     for (int i = 0; i < _memory_size; i++) {
         _weights[i] += tmp * _traces[i];
-        // if (_traces[i] > 0.1) std::cout<<"i:"<<i<<" _trace:"<<_traces[i]<<"
-        // new weight:"<<_weights[i]<<std::endl;
     }
-    // std::cout<<"tmp:"<<tmp<<" _alpha:"<<_alpha<<" delta:"<<delta<<std::endl;
 }
 void cmac_net::update(double* input, double target, int hash) {
     int tiles_array[_num_tilings];

@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include "console_color.h"
 
 #define PI 3.1415926535897932384626433832795
 #define G_ACC 9.80665
@@ -50,6 +51,7 @@ class drone_dynamics {
     void set_init_input(double* init_u_scaled);
     void set_init_input(int id, double init_u_scaled);
 
+
     void input_scale();
     void input_scale(int id, double u_scaled, double * u_true);
 
@@ -62,6 +64,9 @@ class drone_dynamics {
     void rk4_step();
     void rk4_step(double h);
     void set_timestep(double h);
+    
+    double get_scale(int id);
+    double get_state(int id);
 
     void report();
 
@@ -102,6 +107,10 @@ class drone_dynamics {
     double* _init_u_scaled;
 
     double _h;  // default timestep
+
+    double * _l_limit; // state lower limit
+    double * _u_limit; // state upper limit
+    double * _spread; // state value spread
 };
 
 #endif

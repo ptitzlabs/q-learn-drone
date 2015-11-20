@@ -49,6 +49,7 @@ void rate_controller::parm_init(
     // the inputs include current state
     for (int i = 0; i < n_input_states; i++) {
         tile_dimension[i] = _drone.get_scale(parm_id[i]);
+        std::cout<<tile_dimension[i];
     }
     // and the current goal value
     for (int i = 0; i < n_goal_states; i++) {

@@ -1,72 +1,83 @@
 #ifndef _POLICY_SEARCH_HPP_
 #define _POLICY_SEARCH_HPP_
-#include "RL_headers.h"
+#include <cmath>
+#include <cstdlib>
+#include <cstdio>
+#include <iostream>
 #include "cmac_net.h"
-//#include "model.h"
 #include "drone_dynamics.hpp"
-#include "q_controller.h"
 
-class control_policy {
+struct policy_parm {
+    // State parameters
+    int id_input;           // input id
+    int n_action_levels;    // number of discrete action levels
+    double* action_levels;  // action levels applied to input
+
+    int* id_state;  // monitored states
+    int n_state;    // number of states
+    int* id_goal;   // goal states
+    int n_goal;     // number of goals
+
+    // Learning parameters
+    double gamma;        // discount-rate parameter
+    double lambda;       // trace-decay parameter
+    int max_steps;  // maximum number of steps
+    double goal_thres;   // fraction threshold for goal
+    double epsilon;     // probability of random action
+
+    // CMAC parameters
+    int memory_size;      // memory size to store the cmac
+    int tile_resolution;  // number of segments per tile
+    int n_tilings;        // number of overlapping tilings
+    double alpha;         // step-size parameter
+
+    int n_cmac_parms;
+
+    void set_n_goal(int n);
+    void set_n_state(int n);
+    policy_parm();
+    ~policy_parm();
+};
+
+class policy {
    public:
-    control_policy();
-    void parm_init(
-        cmac_net *net,          // network to store the policy
-        drone_dynamics *drone,  // model instance to be used for policy search
-        int control_input_id,
-        double *action_levels,  // control levels values
-        int n_action_levels,    // number of discrete control levels
-        int *input_parm_id,   // ids of states supplied to the policy
-        int n_input_parms,       // number of states supplied to the policy
-        int *goal_state_id,      // goal state ids
-        int n_goal_states,     // number of goal states
-        double model_stepsize = 0.1, double epsilon = 0, double gamma = 1, int max_steps = 10000, double max_overshoot = 0.1);
+    policy();
+    ~policy();
 
-    ~control_policy();
+    void set_parm(policy_parm* parm);
+    void set_model(drone_parm* parm);
 
-    void set_goal(double *goal);
-    int find_max();
+
+    void set_state_parm(int id[], int n);
+    void set_goal_parm(int id[], int n);
+
+    void set_goal(double* goal);
+    void set_init(double* init);
+
+    void train();
+    void run_episode();
+    void run_step();
+
+    bool with_probability(double p);
+
+    bool goal_reached();
+
     void calc_q();
     void calc_q(int hash);
-    bool with_probability(double p);
-    bool goal_reached();
-    bool goal_reached(int n);
-    void run_episode();
-    void run_episode(double *init_state, double *goal_state);
-    void run_step();
-    void report();
-    void write_contour(char *filename, int id, int n = 100, int m = 100);
-    double calc_reward();
+    void calc_cmac_input();
 
-    double goal_dist();
+    int calc_action();
+    void report();
 
    private:
-    cmac_net *_net;
-    drone_dynamics *_drone;
+    policy_parm* p;
+    drone_dynamics* m;
+    cmac_net* n;
 
-    double _model_stepsize;
-    int _max_steps;
-    double _max_overshoot;
-    double _gamma;
-    double _epsilon;
-
-    int _size_q;
-    double *_q;
-
-
-    int _control_input_id;
+    // cache variables
+    double *_q; // stores local Q-values
+    double* _curr_goal;
     int _action;
-    double *_action_levels;
-    int _n_action_levels;
-
-    double *_input_parms;
-    int * _input_parm_id;
-    int _n_input_parms;
-
-    double *_goal_parms;
-    double *_curr_goal;
-    int _n_goal_states;
-    int *_goal_state_id;
-
-    // std::ofstream _myfile;
+    double * _cmac_input;
 };
 #endif

@@ -26,6 +26,8 @@ drone_parm::~drone_parm() {}
 
 drone_dynamics::drone_dynamics(drone_parm drone)
     : _n_out(6), _n_aux_out(1), _n_in(4), _h(0.1) {
+
+    std::cout<<YELLOW<<"INITIALIZING DRONE MODEL "<<RESET<<std::endl;
     // Map pointers to supplied dynamics constants
     b = &drone.b;
     d = &drone.d;
@@ -35,6 +37,11 @@ drone_dynamics::drone_dynamics(drone_parm drone)
     Irotor = &drone.Irotor;
     m = &drone.m;
     l = &drone.l;
+
+    std::cout << "Drone parameters: " << std::endl;
+    std::cout << "b: " << *b << " d: " << *d << " Ixx: " << *Ixx
+              << " Iyy: " << *Iyy << " Izz: " << *Izz << " Irotor: " << *Irotor
+              << " m: " << *m << " l: " << *l << std::endl;
 
     a1_phi = &drone.a1_phi;
     a1_the = &drone.a1_the;
@@ -86,11 +93,63 @@ drone_dynamics::drone_dynamics(drone_parm drone)
         _u_scaled[i] = 0;
     }
 
-    cout << _x[0] <<" " << _x[1] << " " << _x[2]<< endl;
     input_scale();
     calc_aux();
     set_init_parm();
     set_init_input();
+
+    // Initialize state characteristic variables
+    _l_limit = new double[_n_parms];
+    _u_limit = new double[_n_parms];
+    _spread = new double[_n_parms];
+
+    // Set the values of characteristic variables
+    _l_limit[0] = 0;  // x
+    _u_limit[0] = 0;
+    _l_limit[1] = 0;  // y
+    _u_limit[1] = 0;
+    _l_limit[2] = 0;  // z
+    _u_limit[2] = 0;
+    _l_limit[3] = 0;  // phi
+    _u_limit[3] = 0;
+    _l_limit[4] = 0;  // the
+    _u_limit[4] = 0;
+    _l_limit[5] = 0;  // psi
+    _u_limit[5] = 0;
+
+    _l_limit[6] = 0;  // dx
+    _u_limit[6] = 0;
+    _l_limit[7] = 0;  // dy
+    _u_limit[7] = 0;
+    _l_limit[8] = -20;  // dz
+    _u_limit[8] = 10;
+    _l_limit[9] = 0;  // dphi
+    _u_limit[9] = 0;
+    _l_limit[10] = 0;  // dthe
+    _u_limit[10] = 0;
+    _l_limit[11] = 0;  // dpsi
+    _u_limit[11] = 0;
+
+    _l_limit[12] = 0;  // ddx
+    _u_limit[12] = 0;
+    _l_limit[13] = 0;  // ddy
+    _u_limit[13] = 0;
+    _l_limit[14] = -G_ACC * 1.5;  // ddz
+    _u_limit[14] = G_ACC * 0.5;
+    _l_limit[15] = 0;  // ddphi
+    _u_limit[15] = 0;
+    _l_limit[16] = 0;  // ddthe
+    _u_limit[16] = 0;
+    _l_limit[17] = 0;  //)ddpsi
+    _u_limit[17] = 0;
+
+    _l_limit[18] = -1;  // aux0
+    _u_limit[18] = 1;
+
+    for (int i = 0; i < _n_parms; i++) {
+        _spread[i] = _u_limit[i] - _l_limit[i];
+    }
+    report();
 }
 drone_dynamics::~drone_dynamics() {
     delete[] _parm;
@@ -105,12 +164,14 @@ drone_dynamics::~drone_dynamics() {
     delete[] _init_parm;
     delete[] _init_u_true;
     delete[] _init_u_scaled;
+
+    delete[] _l_limit;
+    delete[] _u_limit;
+    delete[] _spread;
 }
 
 // Calc auxillary states
-void drone_dynamics::calc_aux() {
-    calc_aux(_parm);
-}
+void drone_dynamics::calc_aux() { calc_aux(_parm); }
 void drone_dynamics::calc_aux(double **parm) {
     for (int i = 0; i < _n_aux_out; i++) calc_aux(i, parm);
 }
@@ -185,7 +246,10 @@ void drone_dynamics::input_scale() {
 void drone_dynamics::input_scale(int id, double u_scaled, double *u_true) {
     switch (id) {
         case 0:
+            //std::cout << YELLOW << "\nDRONE PARAMETERS: " << RESET << std::endl;
             *u_true = G_ACC * *m * (1 + 0.5 * u_scaled);
+            //std::cout << "M: " << *m << "U_SCALED: " << u_scaled
+                      //<< " U_TRUE: " << *u_true;
             break;
         case 1:
             *u_true = u_scaled * 0.1;
@@ -304,16 +368,20 @@ void drone_dynamics::rk4_step(double h) {
     calc_aux();                      // updating auxillary values
 
     // cleaning up
-    for (int i = 0; i < 4; i++) {
-        // delete kf[i];
-        // delete kg[i];
+    for (int i = 1; i < 4; i++) {
+        delete[] kf[i];
+        delete[] kg[i];
     }
     delete[] kf;
     delete[] kg;
 #ifdef BLABLA
 #endif
 }
+
+double drone_dynamics::get_scale(int id) { return _spread[id]; }
 void drone_dynamics::report() {
+    std::cout << "\n###################\n"
+              << "Simulation report:\n";
     std::cout << "Current state:\nx: " << _x[0] << "\txd: " << _xd[0]
               << "\txdd: " << _xdd[0] << "\tphi: " << _x[3]
               << "\tphid: " << _xd[3] << "\tphidd: " << _xdd[3]
@@ -333,5 +401,6 @@ void drone_dynamics::report() {
               << " U3: " << _u_true[2] << " U3: " << _u_true[3] << std::endl;
 }
 
-void drone_dynamics::set_timestep(double h){ _h = h; }
+double drone_dynamics::get_state(int id) { return *_parm[id]; }
 
+void drone_dynamics::set_timestep(double h) { _h = h; }
