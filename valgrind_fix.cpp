@@ -9,8 +9,15 @@ int main() {
     //////////////////////////////
     // Initializing drone dynamics
     //////////////////////////////
-    drone_parm *sim_parm = new drone_parm;           // providing dynamic parameters
-    //drone_dynamics sim(sim_parm);  // initializing model simulation
+    drone_parm sim_parm;           // providing dynamic parameters
+
+    drone_dynamics sim(&sim_parm);
+    sim.rk4_step();
+    sim_parm.m = 100;
+    std::cout<<BOLDWHITE<<"#######################"<<RESET<<std::endl;
+    sim.rk4_step();
+    //sim.reset();
+    //sim.rk4_step();
 
     ///////////////////////////////////////////////////
     // Initializing altitude rate controller parameters
@@ -40,9 +47,14 @@ int main() {
 
     policy alt_rate_control;
     // Provide FIRST the model and THEN the controller
-    alt_rate_control.set_model(sim_parm);  // providing the model
+    alt_rate_control.set_model(&sim_parm);  // providing the model
     alt_rate_control.set_parm(
         &alt_rate_parm);  // providing the controller parameters
+
+
+    sim_parm.m = 100;
+    alt_rate_control.fun_test(1,1);
+
 
     ////////////////////////
     // Initializing training
@@ -66,10 +78,13 @@ int main() {
     //
     //alt_rate_control.calc_cmac_input();
     
-    //alt_rate_control.run_episode();
+    alt_rate_control.run_episode();
+    sim_parm.m = 200;
+    alt_rate_control.run_episode();
     //alt_rate_control.report();
-    delete sim_parm;
 
+#ifdef BLABLA
+#endif
 #ifdef BLABLA
     sim.set_timestep(0.001);
 

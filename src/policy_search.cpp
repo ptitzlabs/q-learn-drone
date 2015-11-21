@@ -86,12 +86,21 @@ void policy::set_parm(policy_parm* policy_parm) {
     _q = new double[p->n_action_levels];
     _cmac_input = new double[p->n_cmac_parms];
 }
-void policy::set_model(drone_parm* sim_parm) {
+void policy::set_model(drone_parm * sim_parm) {
     std::cout<<BOLDYELLOW<<"SETTING MODEL"<<RESET<<std::endl;
-    m = new drone_dynamics(*sim_parm);
-    //m->set_input(0,1);
-    //m->rk4_step();
-    //m->report();
+    m = new drone_dynamics(sim_parm);
+
+    fun_test(0,1);
+    //fun_test(1,1);
+    //fun_test(2,1);
+    //fun_test(3,1);
+
+    m->report();
+}
+
+void policy::fun_test(int n, int o){
+    m->set_input(n,o);
+    m->rk4_step();
 }
 void policy::set_goal(double* goal) { _curr_goal = goal; }
 void policy::set_init(double* init) {
@@ -119,13 +128,13 @@ bool policy::with_probability(double p) {
 bool policy::goal_reached() {
     double goal_dist = 0;  // normalized goal distance
     int id;
-    std::cout<<"n_goal: "<<p->n_goal<<std::endl;
+    //std::cout<<"n_goal: "<<p->n_goal<<std::endl;
     for (int i = 0; i < p->n_goal; i++) {
         id = p->id_state[i];  // pick up the state id
         //std::cout<<"goal "<<id<<": ";
         //goal_dist = (m->get_state(id) - _curr_goal[i]) / m->get_scale(id);
         //std::cout<<pow((m->get_state(id) - _curr_goal[i]) / m->get_scale(id),2)<<std::endl;
-        std::cout<<goal_dist;
+        //std::cout<<goal_dist;
     }
     //return sqrt(goal_dist) < p->goal_thres;  // check with the goal threshold
     return false;
@@ -173,6 +182,7 @@ void policy::calc_cmac_input() {
 }
 
 void policy::run_episode() {
+    std::cout<<YELLOW<<"Running episode: "<<RESET<<std::endl;
     m->reset();                      // reset model
     n->clear_traces();               // clear traces
     calc_cmac_input();               // update CMAC input
@@ -181,12 +191,16 @@ void policy::run_episode() {
     _action = calc_action();         // find optimal action
 
     int step = 0;  // initial step number
-    while (!goal_reached() && step < p->max_steps) {
+    //while (!goal_reached() && step < p->max_steps) {
+    while (step < p->max_steps) {
         //m->rk4_step();
-        m->report();
+        //m->report();
 
         //m->set_input(0,0);
+        m->report();
+        printf("steponit\n");
         m->rk4_step();
+        //m->report();
         //run_step();
         //m->report();
         step++;
@@ -196,12 +210,14 @@ void policy::run_episode() {
 }
 
 void policy::run_step() {
+    std::cout<<YELLOW<<"Running step: "<<RESET<<std::endl;
     n->drop_traces();           // drop traces
     n->update_traces(_action);  // update traces for the current action
     std::cout<< "\nACTION: "<<_action<<" INPUT: "<< p->action_levels[_action];
     m->set_input(
         p->id_input,                 // specify model input
         p->action_levels[_action]);  // set model input to current action
+    m->report();
     m->rk4_step();                   // execute model step
 
     double reward = -1;                   // calculate new reward

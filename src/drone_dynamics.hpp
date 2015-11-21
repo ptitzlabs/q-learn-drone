@@ -1,5 +1,6 @@
 #ifndef _DRONE_DYNAMICS_HPP_
 #define _DRONE_DYNAMICS_HPP_
+#include <unistd.h>
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
@@ -28,7 +29,7 @@ struct drone_parm {
 
 class drone_dynamics {
    public:
-    drone_dynamics(drone_parm drone);
+    drone_dynamics(drone_parm* drone);
     ~drone_dynamics();
 
     void calc_aux();
@@ -73,17 +74,18 @@ class drone_dynamics {
 
    private:
     // Pointers to drone constants
-    double* b;
-    double* d;
-    double* Ixx;
-    double* Iyy;
-    double* Izz;
-    double* Irotor;
-    double* m;
-    double* l;
+    drone_parm* p;
+    //double* b;
+    //double* d;
+    //double* Ixx;
+    //double* Iyy;
+    //double* Izz;
+    //double* Irotor;
+    //double* m;
+    //double* l;
 
-    double* a1_phi, *a1_the, *a1_psi, *a2_phi, *a2_the, *a3_phi, *a3_the,
-        *a3_psi;
+    //double* a1_phi, *a1_the, *a1_psi, *a2_phi, *a2_the, *a3_phi, *a3_the,
+        //*a3_psi;
 
     int _n_out;  // number of outputs
     int _n_out_tot;

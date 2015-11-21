@@ -69,6 +69,8 @@ class policy {
     int calc_action();
     void report();
 
+    void fun_test(int, int);
+
    private:
     policy_parm* p;
     drone_dynamics* m;

@@ -24,35 +24,36 @@ drone_parm::drone_parm()
 }
 drone_parm::~drone_parm() {}
 
-drone_dynamics::drone_dynamics(drone_parm drone)
+drone_dynamics::drone_dynamics(drone_parm * drone)
     : _n_out(6), _n_aux_out(1), _n_in(4), _h(0.1) {
 
     std::cout<<YELLOW<<"INITIALIZING DRONE MODEL "<<RESET<<std::endl;
     // Map pointers to supplied dynamics constants
-    b = &drone.b;
-    d = &drone.d;
-    Ixx = &drone.Ixx;
-    Iyy = &drone.Iyy;
-    Izz = &drone.Izz;
-    Irotor = &drone.Irotor;
-    m = &drone.m;
-    l = &drone.l;
+    p = drone;
+    //b = &drone.b;
+    //d = &drone.d;
+    //Ixx = &drone.Ixx;
+    //Iyy = &drone.Iyy;
+    //Izz = &drone.Izz;
+    //Irotor = &drone.Irotor;
+    //m = &drone.m;
+    //l = &drone.l;
 
-    std::cout << "Drone parameters: " << std::endl;
-    std::cout << "b: " << *b << " d: " << *d << " Ixx: " << *Ixx
-              << " Iyy: " << *Iyy << " Izz: " << *Izz << " Irotor: " << *Irotor
-              << " m: " << *m << " l: " << *l << std::endl;
+    //std::cout << "Drone parameters: " << std::endl;
+    //std::cout << "b: " << *b << " d: " << *d << " Ixx: " << *Ixx
+              //<< " Iyy: " << *Iyy << " Izz: " << *Izz << " Irotor: " << *Irotor
+              //<< " m: " << *m << " l: " << *l << std::endl;
 
-    a1_phi = &drone.a1_phi;
-    a1_the = &drone.a1_the;
-    a1_psi = &drone.a1_psi;
+    //a1_phi = &drone.a1_phi;
+    //a1_the = &drone.a1_the;
+    //a1_psi = &drone.a1_psi;
 
-    a2_phi = &drone.a2_phi;
-    a2_the = &drone.a2_the;
+    //a2_phi = &drone.a2_phi;
+    //a2_the = &drone.a2_the;
 
-    a3_phi = &drone.a3_phi;
-    a3_the = &drone.a3_the;
-    a3_psi = &drone.a3_psi;
+    //a3_phi = &drone.a3_phi;
+    //a3_the = &drone.a3_the;
+    //a3_psi = &drone.a3_psi;
 
     // Initialize variables to store the inputs and outputs
     _n_out_tot = _n_out * 3;
@@ -149,6 +150,7 @@ drone_dynamics::drone_dynamics(drone_parm drone)
     for (int i = 0; i < _n_parms; i++) {
         _spread[i] = _u_limit[i] - _l_limit[i];
     }
+    calc_f(_xdd,_xd,_x,_u_true);
     report();
 }
 drone_dynamics::~drone_dynamics() {
@@ -247,7 +249,7 @@ void drone_dynamics::input_scale(int id, double u_scaled, double *u_true) {
     switch (id) {
         case 0:
             //std::cout << YELLOW << "\nDRONE PARAMETERS: " << RESET << std::endl;
-            *u_true = G_ACC * *m * (1 + 0.5 * u_scaled);
+            *u_true = G_ACC * p->m * (1 + 0.5 * u_scaled);
             //std::cout << "M: " << *m << "U_SCALED: " << u_scaled
                       //<< " U_TRUE: " << *u_true;
             break;
@@ -266,6 +268,8 @@ void drone_dynamics::input_scale(int id, double u_scaled, double *u_true) {
 // Equations of motion
 void drone_dynamics::calc_f(double *xdd, double *xd, double *x,
                             double *u_true) {
+
+
     // Pre-calculating sines and cosines for speed
     double cphi = cos(x[3]);
     double sphi = sin(x[3]);
@@ -276,7 +280,19 @@ void drone_dynamics::calc_f(double *xdd, double *xd, double *x,
     double cpsi = cos(x[5]);
     double spsi = sin(x[5]);
 
-    double U1m = u_true[0] / *m;
+    double U1m = u_true[0] / p->m;
+    std::cout<<GREEN<<"\n\n\nCURR VALUES\n";
+    for (int i = 0; i < 6; i++){
+        //std::cout<<"x["<<i<<"]: "<<x[i]<<"\t";
+        //std::cout<<"xd["<<i<<"]: "<<xd[i]<<"\n";
+        //std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<std::endl;
+    }
+    for (int i = 0; i < 4; i++){
+        std::cout<<"u_true["<<i<<"]: "<<u_true[i]<<"\n";
+    }
+    std::cout<<"*m: "<<p->m<<std::endl;
+    std::cout<<RESET;
+    //usleep(1000000);
 
     // xyz acceleration
     xdd[0] = (cphi * sthe * cpsi + sphi * spsi) * U1m;  // x
@@ -285,10 +301,18 @@ void drone_dynamics::calc_f(double *xdd, double *xd, double *x,
 
     // angle acceleration
     xdd[3] =
-        xd[4] * xd[5] * *a1_phi + x[4] * *a2_phi + u_true[1] * *a3_phi;  // phi
-    xdd[4] = xd[3] * xd[5] * *a1_the + x[3] * *a2_phi +
-             u_true[2] * *a3_phi;                            // theta
-    xdd[5] = xd[3] * xd[4] * *a1_psi + u_true[3] * *a3_psi;  // psi
+        xd[4] * xd[5] * p->a1_phi + x[4] *p->a2_phi + u_true[1] * p->a3_phi;  // phi
+    xdd[4] = xd[3] * xd[5] * p->a1_the + x[3] * p->a2_phi +
+             u_true[2] * p->a3_phi;                            // theta
+    xdd[5] = xd[3] * xd[4] * p->a1_psi + u_true[3] *p->a3_psi;  // psi
+
+    std::cout<<RED;
+    for (int i = 0; i < 6; i++){
+        //std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<"\n";
+        //std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<std::endl;
+    }
+    std::cout<<RESET;
+    //usleep(1000000);
 }
 
 void drone_dynamics::calc_g(double *g, double *xd, double *x, double *u) {
@@ -325,11 +349,32 @@ void drone_dynamics::rk4_k_calc(double *kf_n, double *kg_n, double *kf_p,
         xd_tmp[i] = _xd[i] + h * kf_p[i];
     }
 
-    calc_f(kf_n, xd_tmp, x_tmp, _u_true);  // second derivatives at t+h
-    calc_g(kg_n, xd_tmp, x_tmp, _u_true);  // first derivatives at t+h
+    std::cout<<CYAN<<"\n\n\nCURR VALUES\n";
+    for (int i = 0; i < 6; i++){
+        std::cout<<"kg_p["<<i<<"]: "<<kg_p[i]<<"\t";
+        std::cout<<"kf_p["<<i<<"]: "<<kf_p[i]<<"\n";
+        //std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<std::endl;
+    }
+    for (int i = 0; i < 6; i++){
+        std::cout<<"x_tmp["<<i<<"]: "<<x_tmp[i]<<"\t";
+        std::cout<<"xd_tmp["<<i<<"]: "<<xd_tmp[i]<<"\n";
+        //std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<std::endl;
+    }
+    std::cout<<"h: "<<h<<std::endl;
+    std::cout<<RESET;
+    //usleep(1000000);
+    calc_f(&*kf_n, xd_tmp, x_tmp, _u_true);  // second derivatives at t+h
+    calc_g(&*kg_n, xd_tmp, x_tmp, _u_true);  // first derivatives at t+h
     // Clear up temp values
     delete[] xd_tmp;
     delete[] x_tmp;
+    std::cout<<MAGENTA<<"\n\n\nNEXT VALUES\n";
+    for (int i = 0; i < 6; i++){
+        std::cout<<"kg_n["<<i<<"]: "<<kg_n[i]<<"\t";
+        std::cout<<"kf_n["<<i<<"]: "<<kf_n[i]<<"\n";
+        //std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<std::endl;
+    }
+    std::cout<<RESET;
 }
 
 void drone_dynamics::rk4_step() { rk4_step(_h); }
