@@ -11,14 +11,6 @@ int main() {
     //////////////////////////////
     drone_parm sim_parm;           // providing dynamic parameters
 
-    drone_dynamics sim(&sim_parm);
-    sim.rk4_step();
-    sim_parm.m = 100;
-    std::cout<<BOLDWHITE<<"#######################"<<RESET<<std::endl;
-    sim.rk4_step();
-    //sim.reset();
-    //sim.rk4_step();
-
     ///////////////////////////////////////////////////
     // Initializing altitude rate controller parameters
     ///////////////////////////////////////////////////
@@ -39,7 +31,7 @@ int main() {
     alt_rate_parm.id_input = 0;  // U1
 
     //Learning parameters
-    alt_rate_parm.max_steps = 1;
+    alt_rate_parm.max_steps = 10000;
 
     //////////////////////////////
     // Initializing control policy
@@ -51,22 +43,17 @@ int main() {
     alt_rate_control.set_parm(
         &alt_rate_parm);  // providing the controller parameters
 
-
-    sim_parm.m = 100;
-    alt_rate_control.fun_test(1,1);
-
-
     ////////////////////////
     // Initializing training
     ////////////////////////
     
     // Initial simulation state
-    double init_state[] = {-10,    // xd
-                           -9.81,  // xdd
+    double init_state[] = {-10,    // zd
+                           -9.81,  // zdd
                            0};     // aux0
 
     // Goal state
-    double goal[] = {0};           // xd
+    double goal[] = {0};           // zd
 
 
     alt_rate_control.set_init(init_state);
@@ -78,10 +65,9 @@ int main() {
     //
     //alt_rate_control.calc_cmac_input();
     
+    for (int i = 0; i < 100; i++){
     alt_rate_control.run_episode();
-    sim_parm.m = 200;
-    alt_rate_control.run_episode();
-    //alt_rate_control.report();
+    }
 
 #ifdef BLABLA
 #endif

@@ -60,8 +60,8 @@ class policy {
 
     bool with_probability(double p);
 
+    double dist_to_goal();
     bool goal_reached();
-
     void calc_q();
     void calc_q(int hash);
     void calc_cmac_input();

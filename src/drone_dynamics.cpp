@@ -281,17 +281,17 @@ void drone_dynamics::calc_f(double *xdd, double *xd, double *x,
     double spsi = sin(x[5]);
 
     double U1m = u_true[0] / p->m;
-    std::cout<<GREEN<<"\n\n\nCURR VALUES\n";
-    for (int i = 0; i < 6; i++){
-        //std::cout<<"x["<<i<<"]: "<<x[i]<<"\t";
-        //std::cout<<"xd["<<i<<"]: "<<xd[i]<<"\n";
-        //std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<std::endl;
-    }
-    for (int i = 0; i < 4; i++){
-        std::cout<<"u_true["<<i<<"]: "<<u_true[i]<<"\n";
-    }
-    std::cout<<"*m: "<<p->m<<std::endl;
-    std::cout<<RESET;
+    //std::cout<<GREEN<<"\n\n\nCURR VALUES\n";
+    //for (int i = 0; i < 6; i++){
+        ////std::cout<<"x["<<i<<"]: "<<x[i]<<"\t";
+        ////std::cout<<"xd["<<i<<"]: "<<xd[i]<<"\n";
+        ////std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<std::endl;
+    //}
+    //for (int i = 0; i < 4; i++){
+        //std::cout<<"u_true["<<i<<"]: "<<u_true[i]<<"\n";
+    //}
+    //std::cout<<"*m: "<<p->m<<std::endl;
+    //std::cout<<RESET;
     //usleep(1000000);
 
     // xyz acceleration
@@ -349,32 +349,32 @@ void drone_dynamics::rk4_k_calc(double *kf_n, double *kg_n, double *kf_p,
         xd_tmp[i] = _xd[i] + h * kf_p[i];
     }
 
-    std::cout<<CYAN<<"\n\n\nCURR VALUES\n";
-    for (int i = 0; i < 6; i++){
-        std::cout<<"kg_p["<<i<<"]: "<<kg_p[i]<<"\t";
-        std::cout<<"kf_p["<<i<<"]: "<<kf_p[i]<<"\n";
-        //std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<std::endl;
-    }
-    for (int i = 0; i < 6; i++){
-        std::cout<<"x_tmp["<<i<<"]: "<<x_tmp[i]<<"\t";
-        std::cout<<"xd_tmp["<<i<<"]: "<<xd_tmp[i]<<"\n";
-        //std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<std::endl;
-    }
-    std::cout<<"h: "<<h<<std::endl;
-    std::cout<<RESET;
+    //std::cout<<CYAN<<"\n\n\nCURR VALUES\n";
+    //for (int i = 0; i < 6; i++){
+        //std::cout<<"kg_p["<<i<<"]: "<<kg_p[i]<<"\t";
+        //std::cout<<"kf_p["<<i<<"]: "<<kf_p[i]<<"\n";
+        ////std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<std::endl;
+    //}
+    //for (int i = 0; i < 6; i++){
+        //std::cout<<"x_tmp["<<i<<"]: "<<x_tmp[i]<<"\t";
+        //std::cout<<"xd_tmp["<<i<<"]: "<<xd_tmp[i]<<"\n";
+        ////std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<std::endl;
+    //}
+    //std::cout<<"h: "<<h<<std::endl;
+    //std::cout<<RESET;
     //usleep(1000000);
     calc_f(&*kf_n, xd_tmp, x_tmp, _u_true);  // second derivatives at t+h
     calc_g(&*kg_n, xd_tmp, x_tmp, _u_true);  // first derivatives at t+h
     // Clear up temp values
     delete[] xd_tmp;
     delete[] x_tmp;
-    std::cout<<MAGENTA<<"\n\n\nNEXT VALUES\n";
-    for (int i = 0; i < 6; i++){
-        std::cout<<"kg_n["<<i<<"]: "<<kg_n[i]<<"\t";
-        std::cout<<"kf_n["<<i<<"]: "<<kf_n[i]<<"\n";
-        //std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<std::endl;
-    }
-    std::cout<<RESET;
+    //std::cout<<MAGENTA<<"\n\n\nNEXT VALUES\n";
+    //for (int i = 0; i < 6; i++){
+        //std::cout<<"kg_n["<<i<<"]: "<<kg_n[i]<<"\t";
+        //std::cout<<"kf_n["<<i<<"]: "<<kf_n[i]<<"\n";
+        ////std::cout<<"xdd["<<i<<"]: "<<xdd[i]<<std::endl;
+    //}
+    //std::cout<<RESET;
 }
 
 void drone_dynamics::rk4_step() { rk4_step(_h); }

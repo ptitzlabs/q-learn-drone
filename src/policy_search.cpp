@@ -10,7 +10,7 @@ policy_parm::policy_parm()
       lambda(0.9),          // trace-decay parameter
       id_state(0),          // null-pointer
       id_goal(0),           // null-pointer
-      goal_thres(0.1),      // goal threshold
+      goal_thres(0.01),      // goal threshold
       epsilon(0),           // random action probability
       n_action_levels(5) {  // number of action levels
     action_levels = new double[n_action_levels];
@@ -45,7 +45,8 @@ policy::~policy() {
 }
 
 void policy::set_parm(policy_parm* policy_parm) {
-    std::cout<<BOLDYELLOW<<"SETTING POLICY PARAMETERS "<<RESET<<std::endl;
+    std::cout << BOLDYELLOW << "SETTING POLICY PARAMETERS " << RESET
+              << std::endl;
     p = &*policy_parm;
     // Initializing a CMAC net to store the policy
     // CMAC tile dimensions to accomodate monitored states
@@ -53,13 +54,13 @@ void policy::set_parm(policy_parm* policy_parm) {
         p->n_state + p->n_goal;  // add up the monitored states and goals
     double tile_dimension[p->n_cmac_parms];  // init tile dimensions
 
-    //for (int i = 0; i < 19; i++) {
-        //std::cout << "state: " << i << " " << m->get_scale(i) << "\n";
+    // for (int i = 0; i < 19; i++) {
+    // std::cout << "state: " << i << " " << m->get_scale(i) << "\n";
     //}
     for (int i = 0; i < p->n_state; i++) {
         tile_dimension[i] =
             m->get_scale(p->id_state[i]);  // fill up the state dimensions
-        //std::cout << tile_dimension[i];
+                                           // std::cout << tile_dimension[i];
     }
 
     for (int i = 0; i < p->n_goal; i++) {
@@ -86,21 +87,15 @@ void policy::set_parm(policy_parm* policy_parm) {
     _q = new double[p->n_action_levels];
     _cmac_input = new double[p->n_cmac_parms];
 }
-void policy::set_model(drone_parm * sim_parm) {
-    std::cout<<BOLDYELLOW<<"SETTING MODEL"<<RESET<<std::endl;
+void policy::set_model(drone_parm* sim_parm) {
+    std::cout << BOLDYELLOW << "SETTING MODEL" << RESET << std::endl;
     m = new drone_dynamics(sim_parm);
-
-    fun_test(0,1);
-    //fun_test(1,1);
-    //fun_test(2,1);
-    //fun_test(3,1);
-
     m->report();
 }
 
-void policy::fun_test(int n, int o){
-    m->set_input(n,o);
-    m->rk4_step();
+void policy::fun_test(int n, int o) {
+    // m->set_input(n,o);
+    // m->rk4_step();
 }
 void policy::set_goal(double* goal) { _curr_goal = goal; }
 void policy::set_init(double* init) {
@@ -125,19 +120,26 @@ bool policy::with_probability(double p) {
     return p > ((float)rand()) / RAND_MAX;
 }
 
-bool policy::goal_reached() {
-    double goal_dist = 0;  // normalized goal distance
+double policy::dist_to_goal() {
+    double goal_dist = 0;
     int id;
-    //std::cout<<"n_goal: "<<p->n_goal<<std::endl;
+    double dist_tmp = 0;
+    ;
+
     for (int i = 0; i < p->n_goal; i++) {
-        id = p->id_state[i];  // pick up the state id
-        //std::cout<<"goal "<<id<<": ";
-        //goal_dist = (m->get_state(id) - _curr_goal[i]) / m->get_scale(id);
-        //std::cout<<pow((m->get_state(id) - _curr_goal[i]) / m->get_scale(id),2)<<std::endl;
-        //std::cout<<goal_dist;
+        id = p->id_state[i];  // get the state id value
+        dist_tmp = (m->get_state(id) - _curr_goal[i]) /
+                   m->get_scale(id);  // check the distance between current
+                                      // state and the goal and normalize
+        goal_dist +=
+            dist_tmp * dist_tmp;  // add squared value to current distance
     }
-    //return sqrt(goal_dist) < p->goal_thres;  // check with the goal threshold
-    return false;
+    return sqrt(goal_dist);  // return normalized vector magnitude
+}
+
+bool policy::goal_reached() {
+    return dist_to_goal() < p->goal_thres;  // check if current distance to goal
+                                            // is less than threshold value
 }
 
 void policy::calc_q() {
@@ -182,7 +184,7 @@ void policy::calc_cmac_input() {
 }
 
 void policy::run_episode() {
-    std::cout<<YELLOW<<"Running episode: "<<RESET<<std::endl;
+    std::cout << YELLOW << "Running episode: " << RESET << std::endl;
     m->reset();                      // reset model
     n->clear_traces();               // clear traces
     calc_cmac_input();               // update CMAC input
@@ -191,36 +193,32 @@ void policy::run_episode() {
     _action = calc_action();         // find optimal action
 
     int step = 0;  // initial step number
-    //while (!goal_reached() && step < p->max_steps) {
-    while (step < p->max_steps) {
-        //m->rk4_step();
-        //m->report();
-
-        //m->set_input(0,0);
-        m->report();
-        printf("steponit\n");
-        m->rk4_step();
-        //m->report();
-        //run_step();
-        //m->report();
+    while (!goal_reached() && step < p->max_steps) {
+        run_step();
         step++;
     }
 
-    std::cout<<step<<std::endl;
+    std::cout << BOLDWHITE << "##########\n" << step << "\n##########" << RESET
+              << std::endl;
 }
 
 void policy::run_step() {
-    std::cout<<YELLOW<<"Running step: "<<RESET<<std::endl;
+    // std::cout << YELLOW << "Running step: " << RESET << std::endl;
     n->drop_traces();           // drop traces
     n->update_traces(_action);  // update traces for the current action
-    std::cout<< "\nACTION: "<<_action<<" INPUT: "<< p->action_levels[_action];
+    // std::cout << "\nACTION: " << _action
+    //<< " INPUT: " << p->action_levels[_action]<<std::endl;
     m->set_input(
         p->id_input,                 // specify model input
         p->action_levels[_action]);  // set model input to current action
-    m->report();
-    m->rk4_step();                   // execute model step
+    // m->report();
+    m->rk4_step();  // execute model step
 
-    double reward = -1;                   // calculate new reward
+    std::cout << RED << "Current distance to goal:" << dist_to_goal() << RESET
+              << std::endl;
+
+    double reward =
+        -dist_to_goal();  // calculate the reward, based on distance value
     double delta = reward - _q[_action];  // substract old Q(k) value
     calc_cmac_input();  // update CMAC input with the new model state
     n->generate_tiles(_cmac_input);  // generate new CMAC tiles
