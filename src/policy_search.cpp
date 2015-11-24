@@ -33,8 +33,10 @@ void policy_parm::set_n_state(int n) {
 
 policy::policy()
     : m(0),  // NULL pointer for model
+      n(0),   // NULL pointer for CMAC
       p(0),  // NULL pointer for policy parameters
-      n(0)   // NULL pointer for CMAC
+      _q(0),
+      _cmac_input(0)
 {}
 
 policy::~policy() {
@@ -45,7 +47,8 @@ policy::~policy() {
 }
 
 void policy::set_parm(policy_parm* policy_parm) {
-    std::cout << BOLDYELLOW << "SETTING POLICY PARAMETERS " << RESET
+    msg::begin_text();
+    std::cout << YELLOW << "Setting policy parameters" << RESET
               << std::endl;
     p = &*policy_parm;
     // Initializing a CMAC net to store the policy
@@ -86,11 +89,12 @@ void policy::set_parm(policy_parm* policy_parm) {
     // Init cache variables
     _q = new double[p->n_action_levels];
     _cmac_input = new double[p->n_cmac_parms];
+    msg::end_text();
 }
 void policy::set_model(drone_parm* sim_parm) {
-    std::cout << BOLDYELLOW << "SETTING MODEL" << RESET << std::endl;
+    msg::begin_text();
     m = new drone_dynamics(sim_parm);
-    m->report();
+    msg::end_text();
 }
 
 void policy::fun_test(int n, int o) {

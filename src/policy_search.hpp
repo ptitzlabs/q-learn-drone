@@ -6,12 +6,16 @@
 #include <iostream>
 #include "cmac_net.h"
 #include "drone_dynamics.hpp"
+#include "message_handler.hpp"
+#include <string>
 
 struct policy_parm {
     // State parameters
     int id_input;           // input id
     int n_action_levels;    // number of discrete action levels
     double* action_levels;  // action levels applied to input
+    std::string name; // controller name for output
+    int id; // controller id number
 
     int* id_state;  // monitored states
     int n_state;    // number of states
